@@ -1,57 +1,69 @@
 # GDG Yogya 2026 - Workshop AI Hermes on Pocket
 
-Workspace riset dan pengembangan (RnD) untuk menjalankan environment Termux via Docker container.
+Workspace riset dan pengembangan (RnD) untuk menjalankan environment Termux dan **Hermes Agent** via Docker container maupun native device Android.
 
 ## 📁 Struktur File
 
 - [`Dockerfile`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/Dockerfile) : Definisi image berbasis `termux/termux-docker`.
 - [`restart.sh`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/restart.sh) : Script otomatis untuk menghentikan container lama, build ulang image, dan menjalankan container baru.
-- [`setup-packages.sh`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/setup-packages.sh) : Script untuk menginstal paket-paket dasar RnD (`python`, `build-essential`, `git`, dll.) ke dalam container yang aktif.
-- `workspace/` : Folder lokal di host yang di-mount ke dalam container (`/data/data/com.termux/files/home/workspace`) agar hasil pekerjaan/kode tidak hilang saat container dihapus.
+- [`install.sh`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/install.sh) : Script di host machine untuk mengeksekusi instalasi Hermes Agent (`mobile.sh`) di dalam container Termux.
+- [`mobile.sh`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/mobile.sh) : Script sekali jalan (one-click installer) untuk menginstal Hermes Agent sesuai tutorial resmi Termux Nous Research. Dapat dijalankan langsung di container atau di aplikasi Termux HP Android.
+- [`setup-packages.sh`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/setup-packages.sh) : Script untuk menginstal paket-paket dasar RnD (`python`, `build-essential`, `git`, dll.).
+- `workspace/` : Folder lokal di host yang di-mount ke dalam container (`/data/data/com.termux/files/home/workspace`) agar data/kode persisten.
 
 ---
 
-## 💡 Mengapa `pkg` tidak diinstal di dalam `Dockerfile`?
+## 🤖 Instalasi & Penggunaan Hermes Agent
 
-Termux secara arsitektural memblokir perintah `pkg` dan `apt` saat dijalankan sebagai `root` (`Error: Cannot run 'pkg' command as root`) untuk mencegah kerusakan hak akses file pada `$PREFIX`. 
+Tutorial Resmi: [Nous Research - Termux Guide](https://github.com/nousresearch/hermes-agent/blob/main/website/docs/getting-started/termux.md)
 
-Selain itu, DNS resolver bawaan Termux (`dnsmasq`) baru diaktifkan oleh `/entrypoint.sh` saat container dimulai (`docker run`), bukan pada proses `docker build`. Oleh karena itu, instalasi paket dilakukan di dalam container yang sudah aktif melalui `/entrypoint.sh`.
+### A. Menjalankan di Docker Container (Host Mac / PC)
+
+1. **Jalankan installer ke dalam container:**
+   ```bash
+   ./install.sh
+   ```
+   *(Script ini otomatis memastikan container aktif, menyalin `mobile.sh`, dan menjalankan instalasi).*
+
+2. **Setup LLM Provider / API Keys:**
+   ```bash
+   docker exec -it termux-rnd /entrypoint.sh hermes setup
+   ```
+
+3. **Buka antarmuka interaktif Hermes TUI:**
+   ```bash
+   docker exec -it termux-rnd /entrypoint.sh hermes --tui
+   ```
 
 ---
 
-## 🚀 Cara Menjalankan
+### B. Menjalankan Langsung di HP Android (Native Termux)
 
-### 1. Jalankan Container (Background Mode)
+Salin file `mobile.sh` ke perangkat Android Anda atau jalankan langsung di aplikasi Termux:
+
 ```bash
-./restart.sh
+bash mobile.sh
 ```
 
-### 2. Jalankan Container + Otomatis Instal Paket RnD
+Setelah instalasi selesai:
 ```bash
-./restart.sh --setup
-# atau: ./restart.sh -s
+hermes setup
+hermes --tui
 ```
 
-### 3. Masuk ke Terminal Container yang Sedang Aktif
-- **Sebagai User Termux (Direkomendasikan untuk `pkg` & pengembangan):**
+---
+
+## 🛠️ Manajemen Container Termux
+
+- **Start / Restart Container:**
+  ```bash
+  ./restart.sh
+  ```
+- **Masuk ke Shell Termux (User standar):**
   ```bash
   docker exec -it termux-rnd /entrypoint.sh login
   ```
-- **Sebagai Root (Jika diperlukan):**
+- **Cek Log Container:**
   ```bash
-  docker exec -it termux-rnd /entrypoint_root.sh login
-  ```
-
-### 4. Instalasi Paket Tambahan
-- Melalui script otomatis:
-  ```bash
-  ./setup-packages.sh
-  ```
-- Atau langsung dari terminal host:
-  ```bash
-  docker exec -it termux-rnd /entrypoint.sh pkg install <nama-paket>
-  ```
-- Atau dari dalam shell Termux:
-  ```bash
-  pkg install <nama-paket>
+  docker logs -f termux-rnd
   ```
