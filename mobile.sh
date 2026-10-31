@@ -42,9 +42,26 @@ export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PREFIX/bin:$PATH"
 # ------------------------------------------------------------------------------
 # 1. Update & Dependensi Dasar
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[1/6] Memeriksa dan menginstal dependensi dasar Termux...${NC}"
+echo -e "\n${BLUE}[1/6] Memeriksa dan menginstal paket-paket dasar Termux...${NC}"
 pkg update -y
-pkg install -y curl gnupg git python clang make procps
+pkg install -y \
+    curl \
+    wget \
+    git \
+    python \
+    nano \
+    tar \
+    unzip \
+    jq \
+    openssh \
+    build-essential \
+    clang \
+    make \
+    procps \
+    net-tools \
+    socat \
+    gnupg \
+    && pkg clean
 
 # ------------------------------------------------------------------------------
 # 2. Instalasi Hermes Agent (Nous Research)
@@ -101,7 +118,6 @@ fi
 # 3. Instalasi Node.js Terbaru & 9Router via npm
 # ------------------------------------------------------------------------------
 echo -e "\n${BLUE}[3/6] Menginstal Node.js versi terbaru & npm...${NC}"
-# Di Termux, paket 'nodejs' selalu berisi Current/Latest version
 pkg install -y nodejs
 
 NODE_VER=$(node -v || true)
@@ -140,7 +156,7 @@ fi
 # ------------------------------------------------------------------------------
 # 5. Setup Auto-Run Script & Pencegah Duplicate Process
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[6/6] Mengonfigurasi auto-start untuk 9Router dan Hermes Gateway...${NC}"
+echo -e "\n${BLUE}[6/6] Mengonfigurasi auto-start untuk 9Router dan Hermes Dashboard/Gateway...${NC}"
 
 mkdir -p "$HOME/.9router/logs"
 mkdir -p "$HOME/.hermes/logs"
@@ -150,7 +166,7 @@ cat << 'EOF' > "$AUTOSTART_SCRIPT"
 #!/data/data/com.termux/files/usr/bin/bash
 
 # ==============================================================================
-# .autostart_services.sh - Auto-run 9router & hermes gateway (tanpa dobel proses)
+# .autostart_services.sh - Auto-run 9router & hermes services (tanpa dobel proses)
 # ==============================================================================
 
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:/data/data/com.termux/files/usr/bin:$PATH"
@@ -158,21 +174,33 @@ export PATH="$HOME/.local/bin:$HOME/.hermes/bin:/data/data/com.termux/files/usr/
 mkdir -p "$HOME/.9router/logs"
 mkdir -p "$HOME/.hermes/logs"
 
-# 1. Pastikan 9router berjalan (jika sudah ada, jangan jalankan lagi)
+# 1. Pastikan 9router berjalan (bind 0.0.0.0 agar dapat diakses dari host/browser)
 if pgrep -f "[9]router" >/dev/null 2>&1; then
     PID_9R=$(pgrep -f "[9]router" | head -n 1)
     echo "[✓] 9router sudah berjalan (PID: $PID_9R) -> http://localhost:20128"
 elif command -v 9router >/dev/null 2>&1; then
     echo "[+] Menjalankan 9router di background..."
-    nohup 9router --host 0.0.0.0 --port 20128 --no-browser > "$HOME/.9router/logs/9router.log" 2>&1 &
-    sleep 1
-    PID_9R=$(pgrep -f "[9]router" | head -n 1)
+    HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup 9router --host 0.0.0.0 --port 20128 --no-browser > "$HOME/.9router/logs/9router.log" 2>&1 &
+    sleep 2
+    PID_9R=$(pgrep -f "[9]router" | head -n 1 || true)
     echo "[✓] 9router berhasil aktif (PID: $PID_9R) -> http://localhost:20128"
 else
     echo "[!] 9router belum terinstal."
 fi
 
-# 2. Pastikan Hermes Gateway berjalan (jika sudah ada, jangan jalankan lagi)
+# 2. Pastikan Hermes Web Dashboard berjalan (:9119)
+if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
+    PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1)
+    echo "[✓] Hermes Web Dashboard sudah berjalan (PID: $PID_HD) -> http://localhost:9119"
+elif command -v hermes >/dev/null 2>&1; then
+    echo "[+] Menjalankan Hermes Web Dashboard di background..."
+    nohup hermes dashboard --host 127.0.0.1 --port 9119 --no-open > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
+    sleep 2
+    PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)
+    echo "[✓] Hermes Web Dashboard berhasil aktif (PID: $PID_HD) -> http://localhost:9119"
+fi
+
+# 3. Pastikan Hermes Gateway berjalan (Telegram / Messaging Backend)
 if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
     PID_HG=$(pgrep -f "hermes.*gateway" | head -n 1)
     echo "[✓] Hermes Gateway sudah berjalan (PID: $PID_HG)"
@@ -180,10 +208,22 @@ elif command -v hermes >/dev/null 2>&1; then
     echo "[+] Menjalankan Hermes Gateway di background..."
     nohup hermes gateway > "$HOME/.hermes/logs/gateway.log" 2>&1 &
     sleep 1
-    PID_HG=$(pgrep -f "hermes.*gateway" | head -n 1)
+    PID_HG=$(pgrep -f "hermes.*gateway" | head -n 1 || true)
     echo "[✓] Hermes Gateway berhasil aktif (PID: $PID_HG)"
-else
-    echo "[!] Hermes CLI belum terinstal."
+fi
+
+# 4. Network Relay via socat (Membuka akses port loopback ke Docker host 0.0.0.0)
+if command -v socat >/dev/null 2>&1; then
+    # Relay untuk Hermes Dashboard (0.0.0.0:9119 -> 127.0.0.1:9119)
+    if ! pgrep -f "socat.*9119" >/dev/null 2>&1; then
+        nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9119 >/dev/null 2>&1 &
+    fi
+    # Relay untuk 9Router (0.0.0.0:20128 -> 127.0.0.1:20128 jika diperlukan)
+    if ! pgrep -f "socat.*20128" >/dev/null 2>&1; then
+        if netstat -tlpn 2>/dev/null | grep -q "127.0.0.1:20128" && ! netstat -tlpn 2>/dev/null | grep -q "0.0.0.0:20128"; then
+            nohup socat TCP-LISTEN:20128,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:20128 >/dev/null 2>&1 &
+        fi
+    fi
 fi
 EOF
 
@@ -209,11 +249,11 @@ echo -e "\n${BLUE}==============================================================
 echo -e "${GREEN}✓ Setup Instalasi Selesai & Service Aktif!                      ${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo -e "🔹 ${YELLOW}9Router Web Dashboard${NC} : http://localhost:20128"
-echo -e "🔹 ${YELLOW}Hermes Web Dashboard${NC}  : http://localhost:9119 (atau :8642)"
+echo -e "🔹 ${YELLOW}Hermes Web Dashboard${NC}  : http://localhost:9119"
 echo -e ""
 echo -e "${YELLOW}👉 LANGKAH SELANJUTNYA (IKUTI URUTAN BERIKUT):${NC}"
 echo -e ""
-echo -e "1. ${GREEN}Buka 9Router dari Browser HP:${NC}"
+echo -e "1. ${GREEN}Buka 9Router dari Browser HP/Host:${NC}"
 echo -e "   - Akses: ${YELLOW}http://localhost:20128${NC}"
 echo -e "   - Buka menu ${YELLOW}Providers${NC} -> Integrasikan ${GREEN}Gemini API Key${NC} Anda."
 echo -e "   - Buka menu ${YELLOW}Combos${NC}    -> Buat combo bernama ${GREEN}gdg-yogya${NC} (pilih model Gemini)."

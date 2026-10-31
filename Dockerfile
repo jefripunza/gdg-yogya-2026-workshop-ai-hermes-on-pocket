@@ -9,6 +9,9 @@ ENV HOME=/data/data/com.termux/files/home
 ENV PREFIX=/data/data/com.termux/files/usr
 ENV PATH=/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets:$PATH
 
+# Expose port untuk 9Router (20128), Hermes Dashboard (9119), Hermes Gateway API (8642), dan port umum (8080)
+EXPOSE 20128 9119 8642 8080
+
 # Catatan Penting:
 # Di Termux, perintah `pkg` dan `apt` secara sengaja diblokir dari user `root`.
 # Karena tahap build Dockerfile berjalan sebagai root tanpa entrypoint (tanpa dnsmasq & privilege drop),

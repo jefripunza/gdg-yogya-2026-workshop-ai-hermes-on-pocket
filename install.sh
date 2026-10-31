@@ -27,7 +27,7 @@ for f in "$MOBILE_SCRIPT" "$HC_SCRIPT" "$HT_SCRIPT"; do
     fi
 done
 
-echo -e "${BLUE}=== [1/3] Memeriksa Status Container '${CONTAINER_NAME}' ===${NC}"
+echo -e "${BLUE}=== [1/3] Memeriksa Status Container & Network '${CONTAINER_NAME}' ===${NC}"
 
 # Cek apakah Docker daemon aktif
 if ! docker info >/dev/null 2>&1; then
@@ -36,18 +36,28 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-# Cek apakah container sedang berjalan
-if [ ! "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
-    if [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
-        echo -e "${YELLOW}Container '${CONTAINER_NAME}' ditemukan dalam kondisi stop. Menjalankan container...${NC}"
-        docker start "${CONTAINER_NAME}"
-    else
-        echo -e "${YELLOW}Container '${CONTAINER_NAME}' belum ada. Menjalankan restart.sh...${NC}"
-        "${SCRIPT_DIR}/restart.sh"
+# Cek apakah container sudah ada dan memiliki port forward yang lengkap
+NEED_RESTART=false
+
+if [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
+    PORT_CHECK=$(docker port "${CONTAINER_NAME}" 20128 2>/dev/null || true)
+    if [ -z "$PORT_CHECK" ]; then
+        echo -e "${YELLOW}Container '${CONTAINER_NAME}' lama belum mengekspos port 20128 & 9119.${NC}"
+        NEED_RESTART=true
     fi
+else
+    NEED_RESTART=true
 fi
 
-echo -e "${GREEN}✓ Container '${CONTAINER_NAME}' aktif.${NC}"
+if [ "$NEED_RESTART" = true ]; then
+    echo -e "${BLUE}Menjalankan restart.sh untuk inisialisasi container dengan port forwarding yang benar...${NC}"
+    "${SCRIPT_DIR}/restart.sh"
+elif [ ! "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
+    echo -e "${YELLOW}Menjalankan container '${CONTAINER_NAME}'...${NC}"
+    docker start "${CONTAINER_NAME}"
+fi
+
+echo -e "${GREEN}✓ Container '${CONTAINER_NAME}' aktif dengan port forwarding.${NC}"
 
 echo -e "\n${BLUE}=== [2/3] Menyalin Script (mobile.sh, hc.sh, ht.sh) ke Container ===${NC}"
 docker cp "${MOBILE_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/mobile.sh"

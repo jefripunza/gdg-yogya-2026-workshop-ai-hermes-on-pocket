@@ -93,14 +93,20 @@ echo -e "${GREEN}✓ File ~/.hermes/.env berhasil diperbarui.${NC}"
 
 echo -e "\n${BLUE}[3/3] Memperbarui status Hermes Gateway...${NC}"
 
-# Restart Hermes Gateway jika sedang berjalan agar config baru langsung aktif
+# Restart Hermes Gateway & Dashboard jika sedang berjalan agar config baru langsung aktif
 if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
     echo -e "${YELLOW}Merestart Hermes Gateway...${NC}"
     pkill -f "hermes.*gateway" || true
     sleep 1
+    nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 fi
 
-nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
+if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
+    echo -e "${YELLOW}Merestart Hermes Dashboard...${NC}"
+    pkill -f "hermes.*dashboard" || true
+    sleep 1
+    nohup hermes dashboard --host 127.0.0.1 --port 9119 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+fi
 sleep 1
 
 PID_GW=$(pgrep -f "hermes.*gateway" | head -n 1 || true)

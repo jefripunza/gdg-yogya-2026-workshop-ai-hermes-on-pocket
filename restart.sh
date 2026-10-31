@@ -93,10 +93,10 @@ docker run -d -it \
     --name "${CONTAINER_NAME}" \
     --security-opt seccomp:unconfined \
     --ulimit nofile=1048576:1048576 \
-    -p "${HOST_PORT}:${CONTAINER_PORT}" \
-    -p 20128:20128 \
-    -p 8642:8642 \
-    -p 9119:9119 \
+    -p 0.0.0.0:${HOST_PORT}:${CONTAINER_PORT} \
+    -p 0.0.0.0:20128:20128 \
+    -p 0.0.0.0:8642:8642 \
+    -p 0.0.0.0:9119:9119 \
     -v "${WORKSPACE_HOST}:${WORKSPACE_CONTAINER}" \
     "${IMAGE_NAME}"
 
