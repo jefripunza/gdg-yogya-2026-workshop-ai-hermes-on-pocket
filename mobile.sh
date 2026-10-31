@@ -67,6 +67,8 @@ pkg install -y \
     net-tools \
     socat \
     gnupg \
+    pkg-config \
+    libheif \
     && pkg clean
 
 # ------------------------------------------------------------------------------
@@ -118,6 +120,19 @@ if [ "$APT_SUCCESS" = false ]; then
     echo -e "${YELLOW}[INFO] Menggunakan Official Installer script Hermes Agent...${NC}"
     rm -f "$SOURCES_FILE"
     curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+fi
+
+# Pastikan dependensi Telegram (python-telegram-bot) siap di venv Hermes
+HERMES_VENV="$PREFIX/lib/hermes-agent/venv"
+HERMES_UV="$PREFIX/lib/hermes-agent/tools/uv/data/data/com.termux/files/usr/bin/uv"
+if [ -d "$HERMES_VENV" ]; then
+    echo -e "${BLUE}Menyiapkan dependensi Telegram (python-telegram-bot)...${NC}"
+    if [ -f "$HERMES_UV" ]; then
+        VIRTUAL_ENV="$HERMES_VENV" "$HERMES_UV" pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+    elif command -v uv >/dev/null 2>&1; then
+        VIRTUAL_ENV="$HERMES_VENV" uv pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+    fi
+    echo -e "${GREEN}✓ Modul Telegram siap digunakan.${NC}"
 fi
 
 # ------------------------------------------------------------------------------

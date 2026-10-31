@@ -94,6 +94,18 @@ EOF
 fi
 echo -e "${GREEN}✓ Platform Telegram aktif di config.yaml.${NC}"
 
+# Pastikan dependensi python-telegram-bot terpasang di venv Hermes
+HERMES_VENV="$PREFIX/lib/hermes-agent/venv"
+HERMES_UV="$PREFIX/lib/hermes-agent/tools/uv/data/data/com.termux/files/usr/bin/uv"
+if [ -d "$HERMES_VENV" ] && ! "$HERMES_VENV/bin/python" -c "import telegram" >/dev/null 2>&1; then
+    echo -e "${YELLOW}Menginstal python-telegram-bot ke dalam environment Hermes...${NC}"
+    if [ -f "$HERMES_UV" ]; then
+        VIRTUAL_ENV="$HERMES_VENV" "$HERMES_UV" pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+    elif command -v uv >/dev/null 2>&1; then
+        VIRTUAL_ENV="$HERMES_VENV" uv pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+    fi
+fi
+
 echo -e "\n${BLUE}[4/4] Merestart Hermes Gateway untuk mengaktifkan koneksi Telegram...${NC}"
 
 # Hentikan proses lama

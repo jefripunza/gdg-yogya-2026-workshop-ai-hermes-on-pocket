@@ -66,6 +66,15 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
   2. `socat` di-bind ke `0.0.0.0:9119` meneruskan koneksi ke `127.0.0.1:9118`.
   3. Dengan pemisahan port ini, baik browser di HP (`localhost:9119`) maupun browser di Docker host (`localhost:9119`) dapat mengakses dashboard dengan lancar.
 
+### 7. Dependensi Platform Telegram (`python-telegram-bot` & `libheif`)
+- Hermes Agent membutuhkan `python-telegram-bot[webhooks]==22.8` agar adapter Telegram dapat berjalan.
+- Jika modul tersebut belum ada di virtual environment (`$PREFIX/lib/hermes-agent/venv`), Hermes mencoba melakukan lazy-install via `pm` (`uv sync`).
+- Namun, proses compile full workspace via `uv` akan gagal di Android karena mencoba mengompilasi `pillow-heif` (memerlukan `libheif`) dan `jiter`/`maturin` (memerlukan Rust).
+- **Solusi**:
+  1. Pasang `libheif` dan `pkg-config` di level Termux (`pkg install`).
+  2. Suntikkan instalasi `python-telegram-bot[webhooks]==22.8` langsung ke dalam virtual environment Hermes menggunakan binary `uv` internal (`$PREFIX/lib/hermes-agent/tools/uv/.../uv pip install ...`).
+  3. Hal ini memastikan `TELEGRAM_AVAILABLE = True` secara instan tanpa memicu kompilasi ulang kode sumber.
+
 ---
 
 ## 🔄 Alur Kerja Pemeliharaan & Testing
