@@ -117,7 +117,10 @@ Sekarang saatnya menghubungkan AI Anda ke Telegram agar bisa diakses kapan saja:
 Agar asisten AI Anda semakin rapi dan terorganisir:
 
 1. Di Telegram, **Buat Grup Baru** (misal: *"Hermes Pocket Lab"*).
-2. Masukkan bot Telegram Anda ke dalam grup tersebut dan jadikan sebagai **Admin**.
+2. Masukkan bot Telegram Anda ke dalam grup tersebut dan **Jadikan sebagai Admin** (Wajib agar bot memiliki izin membaca pesan di dalam grup).
+   > **Catatan Penting untuk Grup**:
+   > - Secara bawaan Telegram, bot hanya bisa membaca pesan di grup jika dijadikan **Admin**, atau jika Anda memanggilnya dengan **mention** (`@nama_bot pesan`), atau jika Anda me-reply pesan bot.
+   > - Agar bot bisa merespons semua pesan di grup tanpa perlu dijadikan Admin atau di-mention: buka `@BotFather` -> ketik `/setprivacy` -> pilih bot Anda -> pilih **`Disable`**.
 3. Buka **Info Grup** -> pilih **Edit (ikon pensil)** -> aktifkan menu **Topics** (Forum).
 4. Buat topik-topik produktif sesuai kebutuhan Anda, contohnya:
    - **`#General`** : Diskusi santai, tanya jawab umum, dan ide cepat.
