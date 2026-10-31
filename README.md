@@ -37,20 +37,21 @@ Pastikan Anda telah menyiapkan hal-hal berikut di smartphone Anda:
 
 ### Langkah 1: Instalasi Sekali Jalan (`mobile.sh`)
 
-Buka aplikasi **Termux** di smartphone Anda, lalu jalankan perintah berikut:
+Buka aplikasi **Termux** di smartphone Anda, lalu cukup salin dan jalankan perintah satu baris (one-liner) berikut:
 
 ```bash
-# Berikan izin wakelock agar Termux tidak tertidur saat berjalan di background:
+# 1. Berikan izin wakelock agar Termux tidak tertidur saat berjalan di background:
 termux-wake-lock
 
-# Jalankan installer:
-bash mobile.sh
+# 2. Jalankan instalasi otomatis sekali jalan via curl:
+curl -fsSL https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master/mobile.sh | bash
 ```
 
-> **Apa yang dilakukan oleh script ini?**
+> **Apa yang dilakukan oleh script ini secara otomatis?**
 > - Menginstal paket dasar Termux dan Node.js versi terbaru.
 > - Mengunduh dan memasang **Hermes Agent** (Nous Research).
-> - Menginstal **9Router** via npm.
+> - Menginstal **9Router** secara global via npm.
+> - Mengunduh script helper konfigurasi (**`hc.sh`** dan **`ht.sh`**) langsung ke direktori home Termux Anda.
 > - Mengaktifkan fitur **Auto-Start**: Setiap kali Termux dibuka kembali, 9Router dan Hermes Gateway akan otomatis menyala di background tanpa terjadi proses ganda (anti-duplikasi).
 
 ---

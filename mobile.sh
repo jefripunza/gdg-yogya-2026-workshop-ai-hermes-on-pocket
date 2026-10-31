@@ -8,6 +8,16 @@
 
 set -e
 
+# Parsing Argumen
+IS_LOCAL=false
+for arg in "$@"; do
+    case "$arg" in
+        -l|--local)
+            IS_LOCAL=true
+            ;;
+    esac
+done
+
 # Warna output terminal
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -32,14 +42,14 @@ export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PREFIX/bin:$PATH"
 # ------------------------------------------------------------------------------
 # 1. Update & Dependensi Dasar
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[1/5] Memeriksa dan menginstal dependensi dasar Termux...${NC}"
+echo -e "\n${BLUE}[1/6] Memeriksa dan menginstal dependensi dasar Termux...${NC}"
 pkg update -y
 pkg install -y curl gnupg git python clang make procps
 
 # ------------------------------------------------------------------------------
 # 2. Instalasi Hermes Agent (Nous Research)
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[2/5] Menyiapkan dan menginstal Hermes Agent...${NC}"
+echo -e "\n${BLUE}[2/6] Menyiapkan dan menginstal Hermes Agent...${NC}"
 mkdir -p "$PREFIX/etc/apt/keyrings"
 KEY_FILE="$PREFIX/etc/apt/keyrings/hermes-agent.asc"
 SOURCES_FILE="$PREFIX/etc/apt/sources.list.d/hermes-agent.list"
@@ -90,7 +100,7 @@ fi
 # ------------------------------------------------------------------------------
 # 3. Instalasi Node.js Terbaru & 9Router via npm
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[3/5] Menginstal Node.js versi terbaru & npm...${NC}"
+echo -e "\n${BLUE}[3/6] Menginstal Node.js versi terbaru & npm...${NC}"
 # Di Termux, paket 'nodejs' selalu berisi Current/Latest version
 pkg install -y nodejs
 
@@ -99,15 +109,38 @@ NPM_VER=$(npm -v || true)
 echo -e "${GREEN}✓ Node.js terinstal: ${NODE_VER}${NC}"
 echo -e "${GREEN}✓ npm terinstal: ${NPM_VER}${NC}"
 
-echo -e "\n${BLUE}[4/5] Menginstal 9Router via npm secara global...${NC}"
+echo -e "\n${BLUE}[4/6] Menginstal 9Router via npm secara global...${NC}"
 npm install -g 9router
-
 echo -e "${GREEN}✓ 9Router berhasil diinstal!${NC}"
 
 # ------------------------------------------------------------------------------
-# 4. Setup Auto-Run Script & Pencegah Duplicate Process
+# 4. Menyiapkan Script Pembantu (hc.sh & ht.sh)
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[5/5] Mengonfigurasi auto-start untuk 9Router dan Hermes Gateway...${NC}"
+echo -e "\n${BLUE}[5/6] Menyiapkan script konfigurasi (hc.sh & ht.sh)...${NC}"
+REPO_RAW_URL="https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master"
+
+if [ "$IS_LOCAL" = true ]; then
+    echo -e "${YELLOW}Mode --local terdeteksi: Menggunakan file hc.sh & ht.sh lokal (skip unduhan GitHub).${NC}"
+    if [ -f "./hc.sh" ] && [ "$(pwd)" != "$HOME" ]; then
+        cp -f ./hc.sh "$HOME/hc.sh"
+    fi
+    if [ -f "./ht.sh" ] && [ "$(pwd)" != "$HOME" ]; then
+        cp -f ./ht.sh "$HOME/ht.sh"
+    fi
+    chmod +x "$HOME/hc.sh" "$HOME/ht.sh" 2>/dev/null || true
+    echo -e "${GREEN}✓ hc.sh dan ht.sh lokal siap digunakan di: ${HOME}/${NC}"
+else
+    echo "Mengunduh hc.sh dan ht.sh dari repository resmi..."
+    curl -fsSL "${REPO_RAW_URL}/hc.sh" -o "$HOME/hc.sh"
+    curl -fsSL "${REPO_RAW_URL}/ht.sh" -o "$HOME/ht.sh"
+    chmod +x "$HOME/hc.sh" "$HOME/ht.sh"
+    echo -e "${GREEN}✓ hc.sh dan ht.sh berhasil diunduh ke: ${HOME}/${NC}"
+fi
+
+# ------------------------------------------------------------------------------
+# 5. Setup Auto-Run Script & Pencegah Duplicate Process
+# ------------------------------------------------------------------------------
+echo -e "\n${BLUE}[6/6] Mengonfigurasi auto-start untuk 9Router dan Hermes Gateway...${NC}"
 
 mkdir -p "$HOME/.9router/logs"
 mkdir -p "$HOME/.hermes/logs"

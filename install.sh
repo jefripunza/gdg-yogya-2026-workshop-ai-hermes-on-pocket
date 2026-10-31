@@ -61,5 +61,5 @@ docker exec "${CONTAINER_NAME}" chmod +x \
 
 echo -e "${GREEN}✓ Script mobile.sh, hc.sh, dan ht.sh siap di dalam container.~${NC}"
 
-echo -e "\n${BLUE}=== [3/3] Menjalankan Instalasi di Dalam Container ===${NC}\n"
-docker exec -it "${CONTAINER_NAME}" /entrypoint.sh bash /data/data/com.termux/files/home/mobile.sh
+echo -e "\n${BLUE}=== [3/3] Menjalankan Instalasi di Dalam Container (Mode --local) ===${NC}\n"
+docker exec -it "${CONTAINER_NAME}" /entrypoint.sh bash /data/data/com.termux/files/home/mobile.sh --local
