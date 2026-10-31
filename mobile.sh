@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 # ==============================================================================
 # mobile.sh - One-Click Installer Hermes Agent & 9Router di Termux
@@ -127,7 +127,26 @@ echo -e "${GREEN}✓ npm terinstal: ${NPM_VER}${NC}"
 
 echo -e "\n${BLUE}[4/6] Menginstal 9Router via npm secara global...${NC}"
 npm install -g 9router
+if command -v termux-fix-shebang >/dev/null 2>&1; then
+    termux-fix-shebang "$PREFIX/bin/9router" "$PREFIX/lib/node_modules/9router/cli.js" 2>/dev/null || true
+fi
 echo -e "${GREEN}✓ 9Router berhasil diinstal!${NC}"
+
+# Pre-build Web UI Hermes agar saat autostart langsung instan & tidak timeout
+if command -v hermes >/dev/null 2>&1; then
+    echo -e "\n${BLUE}Mempersiapkan Web UI Dashboard Hermes (initial build)...${NC}"
+    if [ ! -d "$PREFIX/lib/hermes-agent/app/hermes_cli/web_dist" ]; then
+        hermes dashboard --host 127.0.0.1 --port 9118 --no-open >/dev/null 2>&1 &
+        for i in $(seq 1 40); do
+            if [ -d "$PREFIX/lib/hermes-agent/app/hermes_cli/web_dist" ] || netstat -tlpn 2>/dev/null | grep -q "9118"; then
+                break
+            fi
+            sleep 1
+        done
+        hermes dashboard --stop >/dev/null 2>&1 || pkill -f "hermes.*dashboard" || true
+    fi
+    echo -e "${GREEN}✓ Web UI Dashboard Hermes siap!${NC}"
+fi
 
 # ------------------------------------------------------------------------------
 # 4. Menyiapkan Script Pembantu (hc.sh & ht.sh)
@@ -144,12 +163,14 @@ if [ "$IS_LOCAL" = true ]; then
         cp -f ./ht.sh "$HOME/ht.sh"
     fi
     chmod +x "$HOME/hc.sh" "$HOME/ht.sh" 2>/dev/null || true
+    command -v termux-fix-shebang >/dev/null 2>&1 && termux-fix-shebang "$HOME/hc.sh" "$HOME/ht.sh" 2>/dev/null || true
     echo -e "${GREEN}✓ hc.sh dan ht.sh lokal siap digunakan di: ${HOME}/${NC}"
 else
     echo "Mengunduh hc.sh dan ht.sh dari repository resmi..."
     curl -fsSL "${REPO_RAW_URL}/hc.sh" -o "$HOME/hc.sh"
     curl -fsSL "${REPO_RAW_URL}/ht.sh" -o "$HOME/ht.sh"
     chmod +x "$HOME/hc.sh" "$HOME/ht.sh"
+    command -v termux-fix-shebang >/dev/null 2>&1 && termux-fix-shebang "$HOME/hc.sh" "$HOME/ht.sh" 2>/dev/null || true
     echo -e "${GREEN}✓ hc.sh dan ht.sh berhasil diunduh ke: ${HOME}/${NC}"
 fi
 
@@ -178,23 +199,26 @@ mkdir -p "$HOME/.hermes/logs"
 if pgrep -f "[9]router" >/dev/null 2>&1; then
     PID_9R=$(pgrep -f "[9]router" | head -n 1)
     echo "[✓] 9router sudah berjalan (PID: $PID_9R) -> http://localhost:20128"
-elif command -v 9router >/dev/null 2>&1; then
+else
     echo "[+] Menjalankan 9router di background..."
-    HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup 9router --host 0.0.0.0 --port 20128 --no-browser > "$HOME/.9router/logs/9router.log" 2>&1 &
+    ROUTER_CLI="$PREFIX/lib/node_modules/9router/cli.js"
+    if [ -f "$ROUTER_CLI" ]; then
+        HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup node "$ROUTER_CLI" --host 0.0.0.0 --port 20128 --no-browser --skip-update > "$HOME/.9router/logs/9router.log" 2>&1 &
+    elif command -v 9router >/dev/null 2>&1; then
+        HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup 9router --host 0.0.0.0 --port 20128 --no-browser --skip-update > "$HOME/.9router/logs/9router.log" 2>&1 &
+    fi
     sleep 2
     PID_9R=$(pgrep -f "[9]router" | head -n 1 || true)
     echo "[✓] 9router berhasil aktif (PID: $PID_9R) -> http://localhost:20128"
-else
-    echo "[!] 9router belum terinstal."
 fi
 
-# 2. Pastikan Hermes Web Dashboard berjalan (:9119)
+# 2. Pastikan Hermes Web Dashboard berjalan (internal :9118 -> relay ke :9119)
 if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
     PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1)
     echo "[✓] Hermes Web Dashboard sudah berjalan (PID: $PID_HD) -> http://localhost:9119"
 elif command -v hermes >/dev/null 2>&1; then
     echo "[+] Menjalankan Hermes Web Dashboard di background..."
-    nohup hermes dashboard --host 127.0.0.1 --port 9119 --no-open > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
+    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
     sleep 2
     PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)
     echo "[✓] Hermes Web Dashboard berhasil aktif (PID: $PID_HD) -> http://localhost:9119"
@@ -212,17 +236,10 @@ elif command -v hermes >/dev/null 2>&1; then
     echo "[✓] Hermes Gateway berhasil aktif (PID: $PID_HG)"
 fi
 
-# 4. Network Relay via socat (Membuka akses port loopback ke Docker host 0.0.0.0)
+# 4. Network Relay via socat (Membuka akses port loopback 9118 ke 0.0.0.0:9119)
 if command -v socat >/dev/null 2>&1; then
-    # Relay untuk Hermes Dashboard (0.0.0.0:9119 -> 127.0.0.1:9119)
     if ! pgrep -f "socat.*9119" >/dev/null 2>&1; then
-        nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9119 >/dev/null 2>&1 &
-    fi
-    # Relay untuk 9Router (0.0.0.0:20128 -> 127.0.0.1:20128 jika diperlukan)
-    if ! pgrep -f "socat.*20128" >/dev/null 2>&1; then
-        if netstat -tlpn 2>/dev/null | grep -q "127.0.0.1:20128" && ! netstat -tlpn 2>/dev/null | grep -q "0.0.0.0:20128"; then
-            nohup socat TCP-LISTEN:20128,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:20128 >/dev/null 2>&1 &
-        fi
+        nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
     fi
 fi
 EOF

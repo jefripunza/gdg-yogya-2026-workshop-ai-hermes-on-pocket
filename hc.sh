@@ -105,7 +105,11 @@ if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
     echo -e "${YELLOW}Merestart Hermes Dashboard...${NC}"
     pkill -f "hermes.*dashboard" || true
     sleep 1
-    nohup hermes dashboard --host 127.0.0.1 --port 9119 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+fi
+
+if command -v socat >/dev/null 2>&1 && ! pgrep -f "socat.*9119" >/dev/null 2>&1; then
+    nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
 fi
 sleep 1
 
