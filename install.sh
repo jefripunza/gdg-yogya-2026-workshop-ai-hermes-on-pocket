@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# install.sh - Menjalankan installer Hermes Agent (mobile.sh) di dalam container Termux
+# install.sh - Menjalankan installer Hermes Agent & 9Router di dalam container Termux
 # ==============================================================================
 
 set -e
@@ -9,6 +9,8 @@ set -e
 CONTAINER_NAME="termux-rnd"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOBILE_SCRIPT="${SCRIPT_DIR}/mobile.sh"
+HC_SCRIPT="${SCRIPT_DIR}/hc.sh"
+HT_SCRIPT="${SCRIPT_DIR}/ht.sh"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -17,11 +19,13 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-# Pastikan file mobile.sh ada
-if [ ! -f "$MOBILE_SCRIPT" ]; then
-    echo -e "${RED}[ERROR] File mobile.sh tidak ditemukan di: ${MOBILE_SCRIPT}${NC}"
-    exit 1
-fi
+# Pastikan file yang dibutuhkan ada
+for f in "$MOBILE_SCRIPT" "$HC_SCRIPT" "$HT_SCRIPT"; do
+    if [ ! -f "$f" ]; then
+        echo -e "${RED}[ERROR] File tidak ditemukan: $f${NC}"
+        exit 1
+    fi
+done
 
 echo -e "${BLUE}=== [1/3] Memeriksa Status Container '${CONTAINER_NAME}' ===${NC}"
 
@@ -34,37 +38,28 @@ fi
 
 # Cek apakah container sedang berjalan
 if [ ! "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
-    # Jika container ada tapi statusnya stop, start container
     if [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
         echo -e "${YELLOW}Container '${CONTAINER_NAME}' ditemukan dalam kondisi stop. Menjalankan container...${NC}"
         docker start "${CONTAINER_NAME}"
     else
-        echo -e "${YELLOW}Container '${CONTAINER_NAME}' belum ada.${NC}"
-        echo -e "${BLUE}Menjalankan restart.sh untuk inisialisasi container baru...${NC}"
+        echo -e "${YELLOW}Container '${CONTAINER_NAME}' belum ada. Menjalankan restart.sh...${NC}"
         "${SCRIPT_DIR}/restart.sh"
     fi
 fi
 
 echo -e "${GREEN}✓ Container '${CONTAINER_NAME}' aktif.${NC}"
 
-echo -e "\n${BLUE}=== [2/3] Menyalin mobile.sh ke Dalam Container ===${NC}"
+echo -e "\n${BLUE}=== [2/3] Menyalin Script (mobile.sh, hc.sh, ht.sh) ke Container ===${NC}"
 docker cp "${MOBILE_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/mobile.sh"
-docker exec "${CONTAINER_NAME}" chmod +x /data/data/com.termux/files/home/mobile.sh
-echo -e "${GREEN}✓ mobile.sh berhasil disalin ke ~/mobile.sh di dalam container.${NC}"
+docker cp "${HC_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/hc.sh"
+docker cp "${HT_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/ht.sh"
 
-echo -e "\n${BLUE}=== [3/3] Menjalankan Instalasi Hermes Agent di Dalam Container ===${NC}\n"
+docker exec "${CONTAINER_NAME}" chmod +x \
+    /data/data/com.termux/files/home/mobile.sh \
+    /data/data/com.termux/files/home/hc.sh \
+    /data/data/com.termux/files/home/ht.sh
+
+echo -e "${GREEN}✓ Script mobile.sh, hc.sh, dan ht.sh siap di dalam container.~${NC}"
+
+echo -e "\n${BLUE}=== [3/3] Menjalankan Instalasi di Dalam Container ===${NC}\n"
 docker exec -it "${CONTAINER_NAME}" /entrypoint.sh bash /data/data/com.termux/files/home/mobile.sh
-
-echo -e "\n${BLUE}================================================================${NC}"
-echo -e "${GREEN} Instalasi Selesai! Cara Menggunakan Hermes Agent di Container:${NC}"
-echo -e "${BLUE}================================================================${NC}"
-echo -e " 1. Setup provider LLM / API keys:"
-echo -e "    ${GREEN}docker exec -it ${CONTAINER_NAME} /entrypoint.sh hermes setup${NC}"
-echo -e ""
-echo -e " 2. Jalankan antarmuka interaktif Hermes TUI:"
-echo -e "    ${GREEN}docker exec -it ${CONTAINER_NAME} /entrypoint.sh hermes --tui${NC}"
-echo -e ""
-echo -e " 3. Masuk ke shell Termux:"
-echo -e "    ${GREEN}docker exec -it ${CONTAINER_NAME} /entrypoint.sh login${NC}"
-echo -e "${BLUE}================================================================${NC}\n"
-
