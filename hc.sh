@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # ==============================================================================
 # hc.sh - Hermes Configuration Updater (9Router Integration)
 # Penggunaan: ./hc.sh <combo-name> <api-key>
@@ -38,15 +38,24 @@ if [ -z "$API_KEY" ]; then
     exit 1
 fi
 
-HERMES_DIR="$HOME/.hermes"
+HERMES_DIR="${HERMES_HOME:-$HOME/.hermes}"
 mkdir -p "$HERMES_DIR"
 mkdir -p "$HERMES_DIR/logs"
 
 CONFIG_FILE="$HERMES_DIR/config.yaml"
 ENV_FILE="$HERMES_DIR/.env"
-PROXY_URL="http://127.0.0.1:20128/v1"
 
-echo -e "\n${BLUE}[1/3] Menulis konfigurasi Hermes ke ~/.hermes/config.yaml...${NC}"
+# Auto-detect proxy URL (Docker Compose service '9router' vs Localhost Termux)
+PROXY_URL="${PROXY_URL:-}"
+if [ -z "$PROXY_URL" ]; then
+    if grep -q "9router" /etc/hosts 2>/dev/null || ping -c 1 -W 1 9router >/dev/null 2>&1 || getent hosts 9router >/dev/null 2>&1; then
+        PROXY_URL="http://9router:20128/v1"
+    else
+        PROXY_URL="http://127.0.0.1:20128/v1"
+    fi
+fi
+
+echo -e "\n${BLUE}[1/3] Menulis konfigurasi Hermes ke ${CONFIG_FILE}...${NC}"
 
 # Backup config lama jika ada
 if [ -f "$CONFIG_FILE" ]; then
@@ -74,9 +83,9 @@ EOF
 
 echo -e "${GREEN}✓ config.yaml berhasil diperbarui.${NC}"
 
-echo -e "\n${BLUE}[2/3] Menyimpan kredensial ke ~/.hermes/.env...${NC}"
+echo -e "\n${BLUE}[2/3] Menyimpan kredensial ke ${ENV_FILE}...${NC}"
 
-# Buat atau perbarui variabel di ~/.hermes/.env
+# Buat atau perbarui variabel di .env
 touch "$ENV_FILE"
 # Hapus key lama jika sudah ada
 sed -i '/^OPENAI_BASE_URL=/d' "$ENV_FILE" 2>/dev/null || true
@@ -89,27 +98,34 @@ OPENAI_API_KEY=${API_KEY}
 CUSTOM_API_KEY=${API_KEY}
 EOF
 
-echo -e "${GREEN}✓ File ~/.hermes/.env berhasil diperbarui.${NC}"
+echo -e "${GREEN}✓ File .env berhasil diperbarui.${NC}"
 
-echo -e "\n${BLUE}[3/3] Memperbarui status Hermes Gateway...${NC}"
+echo -e "\n${BLUE}[3/3] Memperbarui status Hermes Gateway & Dashboard...${NC}"
 
-# Restart Hermes Gateway & Dashboard jika sedang berjalan agar config baru langsung aktif
+# Restart atau jalankan Hermes Gateway
 if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
     echo -e "${YELLOW}Merestart Hermes Gateway...${NC}"
     pkill -f "hermes.*gateway" || true
     sleep 1
-    nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 fi
+nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 
+# Restart atau jalankan Hermes Dashboard
 if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
     echo -e "${YELLOW}Merestart Hermes Dashboard...${NC}"
     pkill -f "hermes.*dashboard" || true
     sleep 1
-    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
 fi
 
-if command -v socat >/dev/null 2>&1 && ! pgrep -f "socat.*9119" >/dev/null 2>&1; then
-    nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
+if command -v socat >/dev/null 2>&1; then
+    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    sleep 1
+    if ! pgrep -f "socat.*9119" >/dev/null 2>&1; then
+        nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
+    fi
+else
+    # Jika tidak ada socat (misal Docker container biasa), bind langsung ke 0.0.0.0:9119
+    nohup hermes dashboard --host 0.0.0.0 --port 9119 --no-open --skip-build > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
 fi
 sleep 1
 

@@ -1,0 +1,35 @@
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: 9router
+    restart: unless-stopped
+    ports:
+      - "20128:20128"
+    environment:
+      - INITIAL_PASSWORD=123456
+      - DATA_DIR=/app/data
+      - HOST=0.0.0.0
+      - PORT=20128
+    volumes:
+      - 9router_data:/app/data
+
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes-agent
+    restart: unless-stopped
+    ports:
+      - "9119:9119"
+      - "8642:8642"
+    environment:
+      - HERMES_HOME=/opt/data
+      - INITIAL_PASSWORD=123456
+    volumes:
+      - hermes_data:/opt/data
+    depends_on:
+      - 9router
+    command: sh -c "hermes gateway run 2>/dev/null || sleep infinity"
+
+volumes:
+  9router_data:
+  hermes_data:
+

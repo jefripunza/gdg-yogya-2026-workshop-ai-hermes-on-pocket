@@ -138,6 +138,127 @@ Anda telah berhasil membangun **AI Assistant pribadi** yang hidup langsung di da
 
 ---
 
+## 💻 Alternatif Laptop / Non-Android (Docker Compose)
+
+Bagi rekan-rekan peserta workshop yang **tidak menggunakan smartphone Android** (misalnya pengguna iPhone / iOS, atau yang ingin langsung mencoba di laptop Windows, macOS, atau Linux), Anda tetap dapat mengikuti seluruh materi workshop menggunakan **Docker Compose**.
+
+Kita akan menggunakan image Docker resmi berikut:
+- 🔄 **9Router**: [`decolua/9router`](https://hub.docker.com/r/decolua/9router) (LLM Proxy & Gateway)
+- ⚡ **Hermes Agent**: [`nousresearch/hermes-agent`](https://hub.docker.com/r/nousresearch/hermes-agent) (Autonomous AI Agent)
+
+---
+
+### Langkah 1: Jalankan Docker Compose di Laptop
+
+Pastikan aplikasi **Docker Desktop** (atau Docker Engine) sudah aktif di laptop Anda. 
+
+Jika Anda telah meng-clone repository ini, cukup jalankan perintah:
+
+```bash
+docker compose up -d
+```
+
+*(Atau jika Anda belum meng-clone repository, cukup buat file bernama `docker-compose.yml` di laptop Anda dengan isi berikut lalu jalankan `docker compose up -d`):*
+
+<details>
+<summary><b>📄 Lihat isi docker-compose.yml</b></summary>
+
+```yaml
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: 9router
+    restart: unless-stopped
+    ports:
+      - "20128:20128"
+    environment:
+      - INITIAL_PASSWORD=123456
+      - DATA_DIR=/app/data
+      - HOST=0.0.0.0
+      - PORT=20128
+    volumes:
+      - 9router_data:/app/data
+
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes-agent
+    restart: unless-stopped
+    ports:
+      - "9119:9119"
+      - "8642:8642"
+    environment:
+      - HERMES_HOME=/opt/data
+      - INITIAL_PASSWORD=123456
+    volumes:
+      - hermes_data:/opt/data
+    depends_on:
+      - 9router
+    command: sh -c "hermes gateway run 2>/dev/null || sleep infinity"
+
+volumes:
+  9router_data:
+  hermes_data:
+```
+</details>
+
+---
+
+### Langkah 2: Konfigurasi 9Router & Gemini API
+
+1. Buka browser di laptop Anda: **`http://localhost:20128`**
+2. Masukkan password awal: **`123456`**
+3. Masuk ke menu **Providers** -> Masukkan **Gemini API Key** Anda.
+4. Masuk ke menu **Combos** -> Buat combo bernama **`gdg-yogya`** (pilih model Gemini).
+5. Masuk ke menu **API Keys** -> Klik **Generate API Key** dan salin API Key tersebut (berawalan `9r-...`).
+
+---
+
+### Langkah 3: Pasang Helper Script via `laptop.sh` (Exec Hermes)
+
+Masuk ke dalam container `hermes-agent` dan jalankan script **`laptop.sh`** via `curl` untuk menempelkan (**paste**) script `hc.sh` dan `ht.sh` secara otomatis:
+
+```bash
+docker exec -it hermes-agent bash -c "curl -fsSL https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master/laptop.sh | bash"
+```
+
+*Atau jika Anda lebih suka masuk ke terminal interaktif container terlebih dahulu:*
+```bash
+docker exec -it hermes-agent bash
+curl -fsSL https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master/laptop.sh | bash
+```
+
+> **Apa yang dilakukan oleh script `laptop.sh`?**
+> - Mengunduh dan menempelkan file **`hc.sh`** dan **`ht.sh`** langsung ke direktori kerja container.
+> - Mengatur permission eksekusi (`chmod +x`).
+> - Menyesuaikan konfigurasi jaringan container agar langsung mengenali service `9router`.
+
+---
+
+### Langkah 4: Hubungkan Hermes & Bot Telegram
+
+Masuk ke dalam sesi bash container Hermes:
+
+```bash
+docker exec -it hermes-agent bash
+```
+
+Lalu jalankan langkah konfigurasi yang sama persis seperti di ponsel Android:
+
+1. **Hubungkan Hermes ke 9Router (`hc.sh`)**:
+   ```bash
+   ./hc.sh gdg-yogya <paste-api-key-9router-anda>
+   ```
+
+2. **Hubungkan ke Bot Telegram (`ht.sh`)**:
+   ```bash
+   ./ht.sh <paste-token-telegram-anda>
+   ```
+
+3. **Buka Web UI Dashboard**:
+   Buka browser laptop Anda ke **`http://localhost:9119`** untuk berinteraksi langsung via Web Dashboard, atau buka aplikasi Telegram dan ajak bot Anda mengobrol!
+
+---
+
 ## 💡 Troubleshooting & Tips Tambahan
 
 - **Termux ditutup oleh sistem Android saat layar mati?**

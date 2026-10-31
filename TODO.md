@@ -61,12 +61,25 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Merestart Hermes Gateway agar bot langsung online dan polling aktif.
 - [x] **Mode RnD vs Remote**: Dukungan flag `--local` di `mobile.sh` untuk menggunakan script lokal saat pengujian RnD tanpa harus menunggu push ke GitHub.
 
-### 5. Dokumentasi Workshop Peserta
+### 5. Dokumentasi Workshop Peserta & Proposal
 - [x] **`README.md` Bersih & Fokus Workshop**:
   - 100% berorientasi pada peserta workshop (bebas jargon Docker RnD).
   - Dilengkapi Diagram Alur Arsitektur menggunakan Mermaid.
   - Panduan 5 langkah praktis (Instalasi one-liner, Konfigurasi 9Router Gemini, Integrasi Hermes, Bot Telegram, dan Pembuatan Forum Group Topics).
   - Tips wakelock, baterai, dan troubleshooting lengkap.
+- [x] **Generator Judul Proposal (`TITLE.md`) & Integrasi ke `AGENT.md`**:
+  - Menyusun 10 variasi judul workshop dengan beragam angle (Google Tech, DIY Hacker, Edge AI, Zero-Cost, Developer Productivity).
+  - Menyertakan sub-judul, target audiens, dan blurb proposal siap pakai untuk diajukan ke panitia GDG Yogya 2026.
+  - Mendaftarkan `TITLE.md` sebagai file arsitektur resmi di `AGENT.md`.
+- [x] **Dukungan Lingkungan Laptop / Non-Android (Docker Compose & `laptop.sh`)**:
+  - Menyiapkan `docker-compose.yml` menggunakan image resmi `decolua/9router` dan `nousresearch/hermes-agent`.
+  - Membuat script helper `laptop.sh` yang dieksekusi via `curl` di dalam `docker exec hermes-agent` untuk menempelkan `hc.sh` dan `ht.sh`.
+  - Menyesuaikan `hc.sh` dan `ht.sh` agar portable (shebang `#!/usr/bin/env bash`, auto-detect DNS docker `9router`, `$HERMES_HOME=/opt/data`).
+  - Menambahkan panduan step-by-step di `README.md` (bagian *"Alternatif Laptop / Non-Android"* tepat di bawah section Selamat).
+- [x] **Docker Helper CLI (`docker.sh`) & Dokumentasi di `CONTRIBUTING.md`**:
+  - Membuat script helper `docker.sh` untuk otomasi perintah: `run`, `restart`, `stop`, `down`, `logs`, dan `exec`.
+  - Mendokumentasikan workflow testing multi-container menggunakan `docker.sh` di `CONTRIBUTING.md` (Cara 3).
+  - Mendaftarkan `docker.sh` di `AGENT.md` dan memperbarui validasi sintaks bash.
 
 ---
 

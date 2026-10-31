@@ -48,6 +48,44 @@ cd gdg-yogya-2026-workshop-ai-hermes-on-pocket
    bash mobile.sh --local
    ```
 
+### Cara 3: Menggunakan Docker Compose & Script `docker.sh` (Multi-Container Laptop Testing)
+Untuk menguji arsitektur multi-container (`decolua/9router` dan `nousresearch/hermes-agent`) di laptop tanpa Termux simulator:
+
+1. **Jalankan Container**:
+   ```bash
+   ./docker.sh run
+   ```
+   *(Secara otomatis menjalankan `docker compose up -d` dan menampilkan status link web dashboard).*
+
+2. **Restart Container**:
+   Jika Anda mengubah konfigurasi atau ingin memuat ulang services:
+   ```bash
+   ./docker.sh restart
+   ```
+
+3. **Perintah Berguna Lainnya di `docker.sh`**:
+   - Masuk ke terminal container Hermes:
+     ```bash
+     ./docker.sh exec
+     ```
+   - Pantau logs secara realtime:
+     ```bash
+     ./docker.sh logs           # Semua service
+     ./docker.sh logs 9router   # Khusus 9Router
+     ./docker.sh logs hermes    # Khusus Hermes
+     ```
+   - Hentikan atau bersihkan container:
+     ```bash
+     ./docker.sh stop   # Hentikan sementara
+     ./docker.sh down   # Hentikan dan bersihkan container
+     ```
+
+4. **Testing Setup Script di Hermes Container**:
+   Setelah container aktif, uji coba `laptop.sh`, `hc.sh`, dan `ht.sh`:
+   ```bash
+   docker exec -it hermes-agent bash -c "curl -fsSL https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master/laptop.sh | bash"
+   ```
+
 ---
 
 ## 📐 Standar Kode & Aturan Khusus Termux
@@ -56,12 +94,11 @@ Sebelum mengajukan Pull Request (PR), pastikan kode Anda mematuhi standar beriku
 
 1. **Shebang Termux**:
    - Ingat bahwa Termux **tidak memiliki** `/usr/bin/env` di kernel level.
-   - Gunakan shebang: `#!/data/data/com.termux/files/usr/bin/bash`.
-   - Jika membuat script yang dipanggil via npm, sertakan penanganan `termux-fix-shebang`.
+   - Gunakan shebang: `#!/data/data/com.termux/files/usr/bin/bash` untuk script khusus Termux, atau `#!/usr/bin/env bash` untuk script portable yang dijalankan lewat `termux-fix-shebang`.
 2. **Validasi Sintaks Script**:
    Pastikan tidak ada kesalahan sintaksis bash sebelum commit:
    ```bash
-   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh
+   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh && bash -n docker.sh
    ```
 3. **Pemisahan Konteks `README.md`**:
    - `README.md` ditujukan khusus untuk **peserta workshop**. Jangan memasukkan perintah Docker host ke dalam `README.md`.

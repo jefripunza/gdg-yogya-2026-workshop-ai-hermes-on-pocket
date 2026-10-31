@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # ==============================================================================
 # ht.sh - Hermes Telegram Integration & Bot Configurator
 # Penggunaan: ./ht.sh <token-telegram> [user-id-telegram]
@@ -56,14 +56,14 @@ if [ -z "$ALLOWED_USER" ]; then
     read -r -p "> " ALLOWED_USER
 fi
 
-HERMES_DIR="$HOME/.hermes"
+HERMES_DIR="${HERMES_HOME:-$HOME/.hermes}"
 mkdir -p "$HERMES_DIR"
 mkdir -p "$HERMES_DIR/logs"
 
 ENV_FILE="$HERMES_DIR/.env"
 CONFIG_FILE="$HERMES_DIR/config.yaml"
 
-echo -e "\n${BLUE}[2/4] Menyimpan kredensial Telegram ke ~/.hermes/.env...${NC}"
+echo -e "\n${BLUE}[2/4] Menyimpan kredensial Telegram ke ${ENV_FILE}...${NC}"
 touch "$ENV_FILE"
 
 # Bersihkan konfigurasi telegram lama jika ada
@@ -81,7 +81,7 @@ fi
 
 echo -e "${GREEN}✓ TELEGRAM_BOT_TOKEN berhasil disimpan.${NC}"
 
-echo -e "\n${BLUE}[3/4] Memastikan platform Telegram aktif di ~/.hermes/config.yaml...${NC}"
+echo -e "\n${BLUE}[3/4] Memastikan platform Telegram aktif di ${CONFIG_FILE}...${NC}"
 if [ -f "$CONFIG_FILE" ]; then
     if ! grep -q "telegram:" "$CONFIG_FILE" 2>/dev/null; then
         cat << 'EOF' >> "$CONFIG_FILE"
@@ -94,15 +94,24 @@ EOF
 fi
 echo -e "${GREEN}✓ Platform Telegram aktif di config.yaml.${NC}"
 
-# Pastikan dependensi python-telegram-bot terpasang di venv Hermes
-HERMES_VENV="$PREFIX/lib/hermes-agent/venv"
-HERMES_UV="$PREFIX/lib/hermes-agent/tools/uv/data/data/com.termux/files/usr/bin/uv"
-if [ -d "$HERMES_VENV" ] && ! "$HERMES_VENV/bin/python" -c "import telegram" >/dev/null 2>&1; then
-    echo -e "${YELLOW}Menginstal python-telegram-bot ke dalam environment Hermes...${NC}"
-    if [ -f "$HERMES_UV" ]; then
-        VIRTUAL_ENV="$HERMES_VENV" "$HERMES_UV" pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+# Pastikan dependensi python-telegram-bot terpasang
+HERMES_VENV="${PREFIX:-}/lib/hermes-agent/venv"
+HERMES_UV="${PREFIX:-}/lib/hermes-agent/tools/uv/data/data/com.termux/files/usr/bin/uv"
+
+if ! python3 -c "import telegram" >/dev/null 2>&1 && ! python -c "import telegram" >/dev/null 2>&1; then
+    echo -e "${YELLOW}Menginstal python-telegram-bot ke dalam environment...${NC}"
+    if [ -d "$HERMES_VENV" ]; then
+        if [ -f "$HERMES_UV" ]; then
+            VIRTUAL_ENV="$HERMES_VENV" "$HERMES_UV" pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+        elif command -v uv >/dev/null 2>&1; then
+            VIRTUAL_ENV="$HERMES_VENV" uv pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+        fi
     elif command -v uv >/dev/null 2>&1; then
-        VIRTUAL_ENV="$HERMES_VENV" uv pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+        uv pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+    elif command -v pip3 >/dev/null 2>&1; then
+        pip3 install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
+    elif command -v pip >/dev/null 2>&1; then
+        pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
     fi
 fi
 
