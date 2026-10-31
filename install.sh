@@ -98,6 +98,6 @@ echo -e "   • Atau langsung dari terminal Mac:"
 echo -e "     ${YELLOW}docker exec -it ${CONTAINER_NAME} /entrypoint.sh bash -c \"./ht.sh <token-telegram>\"${NC}\n"
 
 echo -e "4️⃣ ${GREEN}Akses Web Dashboard di Browser:${NC}"
-echo -e "   🔹 9Router Dashboard : ${YELLOW}http://localhost:20128${NC}"
+echo -e "   🔹 9Router Dashboard : ${YELLOW}http://localhost:20128${NC} (Password: ${GREEN}123456${NC})"
 echo -e "   🔹 Hermes Dashboard  : ${YELLOW}http://localhost:9119${NC}"
 echo -e "${BLUE}================================================================${NC}\n"

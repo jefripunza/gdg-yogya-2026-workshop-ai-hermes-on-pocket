@@ -191,24 +191,28 @@ cat << 'EOF' > "$AUTOSTART_SCRIPT"
 # ==============================================================================
 
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:/data/data/com.termux/files/usr/bin:$PATH"
+export INITIAL_PASSWORD="${INITIAL_PASSWORD:-123456}"
 
 mkdir -p "$HOME/.9router/logs"
 mkdir -p "$HOME/.hermes/logs"
 
 # 1. Pastikan 9router berjalan (bind 0.0.0.0 agar dapat diakses dari host/browser)
-if pgrep -f "[9]router" >/dev/null 2>&1; then
-    PID_9R=$(pgrep -f "[9]router" | head -n 1)
+if pgrep -f "next-server|[9]router" >/dev/null 2>&1; then
+    PID_9R=$(pgrep -f "next-server|[9]router" | head -n 1)
     echo "[✓] 9router sudah berjalan (PID: $PID_9R) -> http://localhost:20128"
 else
-    echo "[+] Menjalankan 9router di background..."
+    echo "[+] Menjalankan 9router di background (INITIAL_PASSWORD=123456)..."
+    ROUTER_SERVER="$PREFIX/lib/node_modules/9router/app/server.js"
     ROUTER_CLI="$PREFIX/lib/node_modules/9router/cli.js"
-    if [ -f "$ROUTER_CLI" ]; then
-        HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup node "$ROUTER_CLI" --host 0.0.0.0 --port 20128 --no-browser --skip-update > "$HOME/.9router/logs/9router.log" 2>&1 &
+    if [ -f "$ROUTER_SERVER" ]; then
+        INITIAL_PASSWORD="123456" HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup node "$ROUTER_SERVER" > "$HOME/.9router/logs/9router.log" 2>&1 &
+    elif [ -f "$ROUTER_CLI" ]; then
+        INITIAL_PASSWORD="123456" HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup node "$ROUTER_CLI" --host 0.0.0.0 --port 20128 --no-browser --skip-update > "$HOME/.9router/logs/9router.log" 2>&1 &
     elif command -v 9router >/dev/null 2>&1; then
-        HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup 9router --host 0.0.0.0 --port 20128 --no-browser --skip-update > "$HOME/.9router/logs/9router.log" 2>&1 &
+        INITIAL_PASSWORD="123456" HOSTNAME="0.0.0.0" HOST="0.0.0.0" PORT="20128" nohup 9router --host 0.0.0.0 --port 20128 --no-browser --skip-update > "$HOME/.9router/logs/9router.log" 2>&1 &
     fi
     sleep 2
-    PID_9R=$(pgrep -f "[9]router" | head -n 1 || true)
+    PID_9R=$(pgrep -f "next-server|[9]router" | head -n 1 || true)
     echo "[✓] 9router berhasil aktif (PID: $PID_9R) -> http://localhost:20128"
 fi
 
@@ -252,6 +256,7 @@ if ! grep -q "autostart_services.sh" "$BASHRC" 2>/dev/null; then
     cat << 'EOF' >> "$BASHRC"
 
 # Auto-start 9router & Hermes Gateway
+export INITIAL_PASSWORD="123456"
 if [ -f "$HOME/.autostart_services.sh" ]; then
     bash "$HOME/.autostart_services.sh"
 fi
@@ -265,13 +270,13 @@ bash "$AUTOSTART_SCRIPT"
 echo -e "\n${BLUE}================================================================${NC}"
 echo -e "${GREEN}✓ Setup Instalasi Selesai & Service Aktif!                      ${NC}"
 echo -e "${BLUE}================================================================${NC}"
-echo -e "🔹 ${YELLOW}9Router Web Dashboard${NC} : http://localhost:20128"
+echo -e "🔹 ${YELLOW}9Router Web Dashboard${NC} : http://localhost:20128 (Password: ${GREEN}123456${NC})"
 echo -e "🔹 ${YELLOW}Hermes Web Dashboard${NC}  : http://localhost:9119"
 echo -e ""
 echo -e "${YELLOW}👉 LANGKAH SELANJUTNYA (IKUTI URUTAN BERIKUT):${NC}"
 echo -e ""
 echo -e "1. ${GREEN}Buka 9Router dari Browser HP/Host:${NC}"
-echo -e "   - Akses: ${YELLOW}http://localhost:20128${NC}"
+echo -e "   - Akses: ${YELLOW}http://localhost:20128${NC} (Password: ${GREEN}123456${NC})"
 echo -e "   - Buka menu ${YELLOW}Providers${NC} -> Integrasikan ${GREEN}Gemini API Key${NC} Anda."
 echo -e "   - Buka menu ${YELLOW}Combos${NC}    -> Buat combo bernama ${GREEN}gdg-yogya${NC} (pilih model Gemini)."
 echo -e "   - Buka menu ${YELLOW}API Keys${NC}  -> Generate API Key baru, simpan & copy key tersebut."

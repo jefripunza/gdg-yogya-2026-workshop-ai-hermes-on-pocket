@@ -62,6 +62,7 @@ Setelah script selesai berjalan:
 
 1. Buka browser di smartphone Anda (Chrome / Firefox).
 2. Buka alamat: **`http://localhost:20128`**
+   - Masukkan password default: **`123456`**
 3. Masuk ke menu **Providers**:
    - Pilih provider **Google / Gemini**.
    - Masukkan **Gemini API Key** yang sudah Anda dapatkan dari Google AI Studio.

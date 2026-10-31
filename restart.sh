@@ -106,7 +106,7 @@ echo -e "${GREEN}✓ Container '${CONTAINER_NAME}' berhasil dijalankan!${NC}"
 if [ "$RUN_SETUP" = true ]; then
     echo -e "\n${YELLOW}Menjalankan setup paket dasar RnD di dalam container...${NC}"
     docker exec -it "${CONTAINER_NAME}" /entrypoint.sh sh -c \
-        "pkg update -y && pkg install -y curl wget git python nano tar unzip jq openssh build-essential && pkg clean"
+        "pkg update -y && pkg install -y curl wget git python nano tar unzip jq openssh build-essential clang make procps net-tools socat gnupg && pkg clean"
     echo -e "${GREEN}✓ Paket-paket dasar berhasil diinstal!${NC}"
 fi
 
