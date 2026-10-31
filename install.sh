@@ -69,7 +69,35 @@ docker exec "${CONTAINER_NAME}" chmod +x \
     /data/data/com.termux/files/home/hc.sh \
     /data/data/com.termux/files/home/ht.sh
 
+docker exec "${CONTAINER_NAME}" /entrypoint.sh bash -c \
+    "termux-fix-shebang /data/data/com.termux/files/home/mobile.sh /data/data/com.termux/files/home/hc.sh /data/data/com.termux/files/home/ht.sh 2>/dev/null || true"
+
 echo -e "${GREEN}✓ Script mobile.sh, hc.sh, dan ht.sh siap di dalam container.~${NC}"
 
 echo -e "\n${BLUE}=== [3/3] Menjalankan Instalasi di Dalam Container (Mode --local) ===${NC}\n"
 docker exec -it "${CONTAINER_NAME}" /entrypoint.sh bash /data/data/com.termux/files/home/mobile.sh --local
+
+echo -e "\n${BLUE}================================================================${NC}"
+echo -e "${GREEN}✓ Instalasi RnD Berhasil Diselesaikan!${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${YELLOW}📋 CHEATSHEET PERINTAH (Tinggal Salin & Tempel):${NC}\n"
+
+echo -e "1️⃣ ${GREEN}Masuk ke Terminal Termux Container:${NC}"
+echo -e "   ${YELLOW}docker exec -it ${CONTAINER_NAME} /entrypoint.sh login${NC}\n"
+
+echo -e "2️⃣ ${GREEN}Konfigurasi Hermes ke 9Router (hc.sh):${NC}"
+echo -e "   • Di dalam container Termux:"
+echo -e "     ${YELLOW}./hc.sh gdg-yogya <api-key-9router>${NC}"
+echo -e "   • Atau langsung dari terminal Mac:"
+echo -e "     ${YELLOW}docker exec -it ${CONTAINER_NAME} /entrypoint.sh bash -c \"./hc.sh gdg-yogya <api-key-9router>\"${NC}\n"
+
+echo -e "3️⃣ ${GREEN}Integrasi Telegram Bot (ht.sh):${NC}"
+echo -e "   • Di dalam container Termux:"
+echo -e "     ${YELLOW}./ht.sh <token-telegram>${NC}"
+echo -e "   • Atau langsung dari terminal Mac:"
+echo -e "     ${YELLOW}docker exec -it ${CONTAINER_NAME} /entrypoint.sh bash -c \"./ht.sh <token-telegram>\"${NC}\n"
+
+echo -e "4️⃣ ${GREEN}Akses Web Dashboard di Browser:${NC}"
+echo -e "   🔹 9Router Dashboard : ${YELLOW}http://localhost:20128${NC}"
+echo -e "   🔹 Hermes Dashboard  : ${YELLOW}http://localhost:9119${NC}"
+echo -e "${BLUE}================================================================${NC}\n"
