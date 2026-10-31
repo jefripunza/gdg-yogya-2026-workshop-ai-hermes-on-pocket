@@ -84,11 +84,19 @@ echo -e "\n${BLUE}=== [4/4] Menjalankan Container '${CONTAINER_NAME}' ===${NC}"
 # Flag khusus untuk Termux di macOS Docker:
 # --security-opt seccomp:unconfined : Dibutuhkan untuk kompatibilitas bionic syscall
 # --ulimit nofile=1048576:1048576   : Mencegah dnsmasq 100% CPU hang di macOS
+# Port Forwarding:
+#   8080  : Web / API umum
+#   20128 : 9Router Dashboard & OpenAI-compatible proxy
+#   8642  : Hermes Gateway API
+#   9119  : Hermes Dashboard
 docker run -d -it \
     --name "${CONTAINER_NAME}" \
     --security-opt seccomp:unconfined \
     --ulimit nofile=1048576:1048576 \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
+    -p 20128:20128 \
+    -p 8642:8642 \
+    -p 9119:9119 \
     -v "${WORKSPACE_HOST}:${WORKSPACE_CONTAINER}" \
     "${IMAGE_NAME}"
 
@@ -102,22 +110,23 @@ if [ "$RUN_SETUP" = true ]; then
     echo -e "${GREEN}✓ Paket-paket dasar berhasil diinstal!${NC}"
 fi
 
+# Jalankan auto-start background services (9router & hermes gateway) jika script sudah terpasang
+docker exec "${CONTAINER_NAME}" /entrypoint.sh bash -c \
+    'if [ -f "$HOME/.autostart_services.sh" ]; then bash "$HOME/.autostart_services.sh"; fi' || true
+
 echo -e "\n${BLUE}================================================================${NC}"
 echo -e "${GREEN} Termux RnD Container Siap Digunakan!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo -e " Container Name  : ${YELLOW}${CONTAINER_NAME}${NC}"
 echo -e " Mounted Volume  : ${YELLOW}${WORKSPACE_HOST}${NC} -> ${YELLOW}${WORKSPACE_CONTAINER}${NC}"
-echo -e " Port Forwarding : ${YELLOW}localhost:${HOST_PORT} -> ${CONTAINER_PORT}${NC}"
+echo -e " Port Forwarding :"
+echo -e "   - 9Router Dashboard & Proxy : ${YELLOW}http://localhost:20128${NC}"
+echo -e "   - Hermes Gateway API        : ${YELLOW}http://localhost:8642${NC}"
+echo -e "   - Hermes Web Dashboard      : ${YELLOW}http://localhost:9119${NC}"
+echo -e "   - Port Umum                 : ${YELLOW}http://localhost:${HOST_PORT}${NC}"
 echo -e ""
-echo -e " Perintah masuk ke shell Termux (User biasa - disarankan):"
+echo -e " Perintah masuk ke shell Termux:"
 echo -e "   ${GREEN}docker exec -it ${CONTAINER_NAME} /entrypoint.sh login${NC}"
-echo -e ""
-echo -e " Perintah masuk ke shell sebagai Root (jika diperlukan):"
-echo -e "   ${GREEN}docker exec -it ${CONTAINER_NAME} /entrypoint_root.sh login${NC}"
-echo -e ""
-echo -e " Perintah instal paket dari host:"
-echo -e "   ${GREEN}docker exec -it ${CONTAINER_NAME} /entrypoint.sh pkg install <nama-paket>${NC}"
-echo -e "   atau jalankan: ${YELLOW}./setup-packages.sh${NC}"
 echo -e ""
 echo -e " Perintah melihat log container:"
 echo -e "   ${GREEN}docker logs -f ${CONTAINER_NAME}${NC}"
