@@ -40,14 +40,11 @@ Pastikan Anda telah menyiapkan hal-hal berikut di smartphone Anda:
 Buka aplikasi **Termux** di smartphone Anda, lalu cukup salin dan jalankan perintah satu baris (one-liner) berikut:
 
 ```bash
-# 1. Berikan izin wakelock agar Termux tidak tertidur saat berjalan di background:
-termux-wake-lock
-
-# 2. Jalankan instalasi otomatis sekali jalan via curl:
 curl -fsSL https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master/mobile.sh | bash
 ```
 
 > **Apa yang dilakukan oleh script ini secara otomatis?**
+> - Mengaktifkan izin wakelock (`termux-wake-lock`) secara otomatis agar proses tetap berjalan di background saat layar mati.
 > - Menginstal paket dasar Termux dan Node.js versi terbaru.
 > - Mengunduh dan memasang **Hermes Agent** (Nous Research).
 > - Menginstal **9Router** secara global via npm.

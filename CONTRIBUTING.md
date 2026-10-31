@@ -100,3 +100,4 @@ Sebelum mengajukan Pull Request (PR), pastikan kode Anda mematuhi standar beriku
 Jika Anda memiliki pertanyaan arsitektur atau ingin mendiskusikan ide sebelum membuat kode, silakan buka **Issue** baru di GitHub dengan label `enhancement` atau `question`.
 
 Selamat berkontribusi! 🎉
+

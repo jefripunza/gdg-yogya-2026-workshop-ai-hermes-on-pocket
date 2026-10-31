@@ -22,6 +22,7 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
 
 ### 2. Auto-Installer Termux untuk Smartphone (`mobile.sh`)
 - [x] **One-Liner Installation**: Dukungan curl pipelined install (`curl -fsSL <url> | bash`).
+- [x] **Otomatisasi Termux Wake-Lock**: Memasukkan `termux-wake-lock` langsung ke dalam `mobile.sh` dan `~/.autostart_services.sh`, serta menyederhanakan blok instalasi di `README.md` menjadi satu baris murni (`curl ... | bash`) agar mudah disalin dalam 1 klik.
 - [x] **Konsolidasi Paket & Dependensi**: Menggabungkan seluruh kebutuhan paket (`curl`, `wget`, `git`, `python`, `nano`, `tar`, `unzip`, `jq`, `openssh`, `build-essential`, `clang`, `make`, `procps`, `net-tools`, `socat`, `gnupg`) ke dalam `mobile.sh` dan menghapus `setup-packages.sh`.
 - [x] **Dukungan Node.js Terbaru & 9Router**: Menginstal Node.js versi terbaru via `pkg install -y nodejs` dan menginstal `9router` via npm secara global.
 - [x] **Pemasangan Hermes Agent yang Tangguh**:
@@ -73,3 +74,4 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
 - [ ] **Backup & Restore Konfigurasi**: Script helper untuk mengekspor & mengimpor folder `~/.hermes` dan `~/.9router` agar mudah dipindahkan ke smartphone baru.
 - [ ] **Monitoring Resource CPU & RAM**: Menambahkan utilitas pemantauan konsumsi baterai dan memori ringan di Termux.
 - [ ] **Custom System Prompt Preset**: Menyediakan pilihan persona awal untuk Hermes (Coding Assistant, Research Partner, Daily Organizer) langsung dari `hc.sh`.
+

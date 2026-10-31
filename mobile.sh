@@ -39,6 +39,12 @@ fi
 
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PREFIX/bin:$PATH"
 
+# Aktifkan wakelock agar Termux tidak tertidur/dihentikan Android saat layar mati
+if command -v termux-wake-lock >/dev/null 2>&1; then
+    termux-wake-lock 2>/dev/null || true
+    echo -e "${GREEN}✓ Termux Wake-Lock aktif (mencegah sleep di background).${NC}"
+fi
+
 # ------------------------------------------------------------------------------
 # 1. Update & Dependensi Dasar
 # ------------------------------------------------------------------------------
@@ -192,6 +198,11 @@ cat << 'EOF' > "$AUTOSTART_SCRIPT"
 
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:/data/data/com.termux/files/usr/bin:$PATH"
 export INITIAL_PASSWORD="${INITIAL_PASSWORD:-123456}"
+
+# Pastikan wakelock aktif agar background services tidak tertidur
+if command -v termux-wake-lock >/dev/null 2>&1; then
+    termux-wake-lock 2>/dev/null || true
+fi
 
 mkdir -p "$HOME/.9router/logs"
 mkdir -p "$HOME/.hermes/logs"
