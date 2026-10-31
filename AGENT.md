@@ -75,6 +75,55 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
   2. Suntikkan instalasi `python-telegram-bot[webhooks]==22.8` langsung ke dalam virtual environment Hermes menggunakan binary `uv` internal (`$PREFIX/lib/hermes-agent/tools/uv/.../uv pip install ...`).
   3. Hal ini memastikan `TELEGRAM_AVAILABLE = True` secara instan tanpa memicu kompilasi ulang kode sumber.
 
+### 8. Telegram Group Privacy & Admin Permissions
+- Secara default, bot yang dibuat via `@BotFather` memiliki **Group Privacy Mode: Enabled**.
+- Dalam mode ini, server Telegram **tidak mengirimkan** chat teks biasa di grup ke bot, kecuali:
+  1. Bot dijadikan **Admin** di grup.
+  2. Atau pesan me-mention username bot (`@nama_bot`).
+  3. Atau pengguna me-reply pesan dari bot.
+  4. Atau Group Privacy di-disable via `@BotFather` (`/setprivacy` -> `Disable`).
+- Hermes Agent juga menerapkan aturan `require_mention` di grup agar tidak menyampah ke obrolan umum.
+
+---
+
+## 📖 Step-by-Step Runbook (Mulai dari Nol hingga Siap Pakai)
+
+Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
+
+### Skenario A: Di Komputer Developer (Simulasi Docker macOS/Linux)
+1. **Reset & Jalankan Container**:
+   ```bash
+   ./restart.sh
+   ```
+2. **Jalankan Instalasi Otomatis (Mode Lokal)**:
+   ```bash
+   ./install.sh
+   ```
+3. **Verifikasi Web Dashboard di Browser Host**:
+   - Buka `http://localhost:20128` (Password: `123456`) -> Tambahkan Provider Gemini API & buat Combo `gdg-yogya` -> Salin API Key.
+   - Buka `http://localhost:9119` (Hermes Web Dashboard).
+4. **Hubungkan Hermes & Telegram dari Host**:
+   ```bash
+   docker exec -it termux-rnd /entrypoint.sh bash -c "./hc.sh gdg-yogya <api-key-9router>"
+   docker exec -it termux-rnd /entrypoint.sh bash -c "./ht.sh <token-telegram>"
+   ```
+
+### Skenario B: Di Smartphone Peserta Workshop (Android Termux Asli)
+1. Buka Termux, jalankan one-liner:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master/mobile.sh | bash
+   ```
+2. Buka browser HP: `http://localhost:20128` (Password: `123456`), setel Gemini API Key, buat combo `gdg-yogya`, salin API Key 9Router.
+3. Kembali ke Termux, jalankan:
+   ```bash
+   ./hc.sh gdg-yogya <api-key-9router>
+   ```
+4. Hubungkan ke Bot Telegram:
+   ```bash
+   ./ht.sh <token-telegram>
+   ```
+5. Buat grup dengan Topics di Telegram, masukkan bot, jadikan Admin, dan nikmati asisten AI di saku Anda!
+
 ---
 
 ## 🔄 Alur Kerja Pemeliharaan & Testing

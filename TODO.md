@@ -57,6 +57,7 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Validasi token langsung via Telegram Bot API (`getMe`).
   - Konfigurasi platform Telegram di `config.yaml` dan penyimpanan token di `.env`.
   - Otomatisasi instalasi paket `libheif`, `pkg-config`, dan dependensi `python-telegram-bot[webhooks]==22.8` ke dalam virtual environment Hermes.
+  - Dokumentasi aturan Telegram Group Privacy Mode (wajib Admin / disable privacy / mention) di `README.md` dan output terminal `ht.sh`.
   - Merestart Hermes Gateway agar bot langsung online dan polling aktif.
 - [x] **Mode RnD vs Remote**: Dukungan flag `--local` di `mobile.sh` untuk menggunakan script lokal saat pengujian RnD tanpa harus menunggu push ke GitHub.
 
