@@ -8,7 +8,7 @@
 set -e
 
 # Versi Script
-HC_SH_VERSION="v2.1.0"
+HC_SH_VERSION="v2.2.0"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -111,6 +111,74 @@ echo -e "\n${BLUE}[3/3] Memperbarui status Hermes Gateway & Dashboard...${NC}"
 export TMPDIR="${PREFIX:-/data/data/com.termux/files/usr}/tmp"
 mkdir -p "$TMPDIR"
 
+# ------------------------------------------------------------------------------
+# Universal Fix untuk Node.js di Android 15 (Bionic Linker & esbuild hook)
+# ------------------------------------------------------------------------------
+PREFIX_PATH="${PREFIX:-/data/data/com.termux/files/usr}"
+FIX_FILE="$PREFIX_PATH/lib/node_android_fix.cjs"
+mkdir -p "$PREFIX_PATH/lib"
+
+cat << 'EOF' > "$FIX_FILE"
+const nodeBin = process.env.PREFIX ? (process.env.PREFIX + '/bin/node') : '/data/data/com.termux/files/usr/bin/node';
+
+// 1. Override process.execPath agar tidak menunjuk ke linker64 di Android 15
+if (process.execPath && process.execPath.includes('linker')) {
+  try {
+    Object.defineProperty(process, 'execPath', {
+      value: nodeBin,
+      writable: false,
+      configurable: true,
+      enumerable: true
+    });
+  } catch (e) {}
+}
+
+// 2. Intercept child_process (execFileSync, spawnSync, spawn)
+try {
+  const cp = require('node:child_process');
+
+  const patchCall = (file, args) => {
+    if (typeof file === 'string') {
+      if (file.includes('linker')) {
+        return [nodeBin, args];
+      }
+      if (file.includes('esbuild/bin/esbuild') || file.endsWith('npm-cli.js')) {
+        return [nodeBin, [file, ...(args || [])]];
+      }
+    }
+    return [file, args];
+  };
+
+  const origExecFileSync = cp.execFileSync;
+  cp.execFileSync = function (file, args, ...rest) {
+    const [pfile, pargs] = patchCall(file, args);
+    return origExecFileSync.call(this, pfile, pargs, ...rest);
+  };
+
+  const origSpawnSync = cp.spawnSync;
+  cp.spawnSync = function (file, args, ...rest) {
+    const [pfile, pargs] = patchCall(file, args);
+    return origSpawnSync.call(this, pfile, pargs, ...rest);
+  };
+
+  const origSpawn = cp.spawn;
+  cp.spawn = function (file, args, ...rest) {
+    const [pfile, pargs] = patchCall(file, args);
+    return origSpawn.call(this, pfile, pargs, ...rest);
+  };
+} catch (e) {}
+EOF
+
+export NODE_OPTIONS="--require $FIX_FILE"
+
+# Coba pasang paket native esbuild via apt jika ada di repo Termux
+if command -v apt-get >/dev/null 2>&1 && [ ! -f "$PREFIX_PATH/bin/esbuild" ]; then
+    apt-get install -y --allow-unauthenticated esbuild 2>/dev/null || true
+fi
+if [ -f "$PREFIX_PATH/bin/esbuild" ]; then
+    export ESBUILD_BINARY_PATH="$PREFIX_PATH/bin/esbuild"
+fi
+
 # Perbaiki shebang script internal Hermes (khususnya npm-cli.js & node-deps.mjs)
 # agar tidak memicu error Android linker64 (ELF executable too small)
 HERMES_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent"
@@ -141,7 +209,15 @@ fi
 WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
 if [ ! -d "$WEB_DIST" ] && [ -d "$HERMES_LIB/app" ] && command -v npm >/dev/null 2>&1; then
     echo -e "${BLUE}Membangun Web UI Hermes ke ${WEB_DIST} (pertama kali, ~1 menit)...${NC}"
-    (cd "$HERMES_LIB/app" && npm install --workspace web && npm run build -w web) > "$HERMES_DIR/logs/web_build.log" 2>&1 || true
+    # Hapus sisa broken install esbuild jika ada
+    rm -rf "$HERMES_LIB/app/node_modules/esbuild" 2>/dev/null || true
+    (
+        export NODE_OPTIONS="--require $FIX_FILE"
+        [ -n "${ESBUILD_BINARY_PATH:-}" ] && export ESBUILD_BINARY_PATH="$ESBUILD_BINARY_PATH"
+        cd "$HERMES_LIB/app"
+        npm install --workspace web
+        npm run build -w web
+    ) > "$HERMES_DIR/logs/web_build.log" 2>&1 || true
     if [ -d "$WEB_DIST" ]; then
         echo -e "${GREEN}✓ Web UI Hermes berhasil dibangun!${NC}"
     else
@@ -170,7 +246,7 @@ pkill -f "socat.*9119" || true
 sleep 1
 
 if command -v socat >/dev/null 2>&1; then
-    nohup hermes dashboard $DASHBOARD_FLAGS > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    NODE_OPTIONS="--require $FIX_FILE" nohup hermes dashboard $DASHBOARD_FLAGS > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
     echo -n "Menunggu Hermes Web UI siap di port :9118"
     DASHBOARD_READY=false
     for i in $(seq 1 30); do
@@ -200,7 +276,7 @@ else
     if [ -d "$WEB_DIST" ]; then
         DASHBOARD_FLAGS_NO_SOCAT="$DASHBOARD_FLAGS_NO_SOCAT --skip-build"
     fi
-    nohup hermes dashboard $DASHBOARD_FLAGS_NO_SOCAT > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    NODE_OPTIONS="--require $FIX_FILE" nohup hermes dashboard $DASHBOARD_FLAGS_NO_SOCAT > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
     sleep 2
 fi
 

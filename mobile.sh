@@ -20,7 +20,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.4.0"
+MOBILE_SH_VERSION="v2.5.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -255,6 +255,74 @@ if command -v termux-fix-shebang >/dev/null 2>&1; then
 fi
 echo -e "${GREEN}✓ 9Router berhasil diinstal!${NC}"
 
+# ------------------------------------------------------------------------------
+# Universal Fix untuk Node.js di Android 15 (Bionic Linker & esbuild hook)
+# ------------------------------------------------------------------------------
+PREFIX_PATH="${PREFIX:-/data/data/com.termux/files/usr}"
+FIX_FILE="$PREFIX_PATH/lib/node_android_fix.cjs"
+mkdir -p "$PREFIX_PATH/lib"
+
+cat << 'EOF' > "$FIX_FILE"
+const nodeBin = process.env.PREFIX ? (process.env.PREFIX + '/bin/node') : '/data/data/com.termux/files/usr/bin/node';
+
+// 1. Override process.execPath agar tidak menunjuk ke linker64 di Android 15
+if (process.execPath && process.execPath.includes('linker')) {
+  try {
+    Object.defineProperty(process, 'execPath', {
+      value: nodeBin,
+      writable: false,
+      configurable: true,
+      enumerable: true
+    });
+  } catch (e) {}
+}
+
+// 2. Intercept child_process (execFileSync, spawnSync, spawn)
+try {
+  const cp = require('node:child_process');
+
+  const patchCall = (file, args) => {
+    if (typeof file === 'string') {
+      if (file.includes('linker')) {
+        return [nodeBin, args];
+      }
+      if (file.includes('esbuild/bin/esbuild') || file.endsWith('npm-cli.js')) {
+        return [nodeBin, [file, ...(args || [])]];
+      }
+    }
+    return [file, args];
+  };
+
+  const origExecFileSync = cp.execFileSync;
+  cp.execFileSync = function (file, args, ...rest) {
+    const [pfile, pargs] = patchCall(file, args);
+    return origExecFileSync.call(this, pfile, pargs, ...rest);
+  };
+
+  const origSpawnSync = cp.spawnSync;
+  cp.spawnSync = function (file, args, ...rest) {
+    const [pfile, pargs] = patchCall(file, args);
+    return origSpawnSync.call(this, pfile, pargs, ...rest);
+  };
+
+  const origSpawn = cp.spawn;
+  cp.spawn = function (file, args, ...rest) {
+    const [pfile, pargs] = patchCall(file, args);
+    return origSpawn.call(this, pfile, pargs, ...rest);
+  };
+} catch (e) {}
+EOF
+
+export NODE_OPTIONS="--require $FIX_FILE"
+
+# Coba pasang paket native esbuild via apt jika ada di repo Termux
+if command -v apt-get >/dev/null 2>&1 && [ ! -f "$PREFIX_PATH/bin/esbuild" ]; then
+    apt-get install -y --allow-unauthenticated esbuild 2>/dev/null || true
+fi
+if [ -f "$PREFIX_PATH/bin/esbuild" ]; then
+    export ESBUILD_BINARY_PATH="$PREFIX_PATH/bin/esbuild"
+fi
+
 # Patch node-deps.mjs: Menyelaraskan resolusi Node agar tidak merujuk ke linker64 di Android 15
 NODE_DEPS="$HERMES_LIB/app/scripts/build/node-deps.mjs"
 if [ -f "$NODE_DEPS" ] && command -v node >/dev/null 2>&1; then
@@ -277,7 +345,14 @@ fi
 WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
 if [ ! -d "$WEB_DIST" ] && [ -d "$HERMES_LIB/app" ] && command -v npm >/dev/null 2>&1; then
     echo -e "${BLUE}Membangun Web UI Hermes ke ${WEB_DIST} (pertama kali, ~1 menit)...${NC}"
-    (cd "$HERMES_LIB/app" && npm install --workspace web && npm run build -w web) > "$HERMES_DIR/logs/web_build.log" 2>&1 || true
+    rm -rf "$HERMES_LIB/app/node_modules/esbuild" 2>/dev/null || true
+    (
+        export NODE_OPTIONS="--require $FIX_FILE"
+        [ -n "${ESBUILD_BINARY_PATH:-}" ] && export ESBUILD_BINARY_PATH="$ESBUILD_BINARY_PATH"
+        cd "$HERMES_LIB/app"
+        npm install --workspace web
+        npm run build -w web
+    ) > "$HERMES_DIR/logs/web_build.log" 2>&1 || true
     if [ -d "$WEB_DIST" ]; then
         echo -e "${GREEN}✓ Web UI Hermes berhasil dibangun!${NC}"
     fi
@@ -342,6 +417,11 @@ cat << 'EOF' > "$AUTOSTART_SCRIPT"
 
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:/data/data/com.termux/files/usr/bin:$PATH"
 export INITIAL_PASSWORD="${INITIAL_PASSWORD:-123456}"
+
+# Android 15 Node.js fix
+if [ -f "$PREFIX/lib/node_android_fix.cjs" ]; then
+    export NODE_OPTIONS="--require $PREFIX/lib/node_android_fix.cjs"
+fi
 
 # Pastikan wakelock aktif agar background services tidak tertidur
 if command -v termux-wake-lock >/dev/null 2>&1; then
@@ -420,6 +500,9 @@ if ! grep -q "autostart_services.sh" "$BASHRC" 2>/dev/null; then
 
 # Auto-start 9router & Hermes Gateway
 export INITIAL_PASSWORD="123456"
+if [ -f "$PREFIX/lib/node_android_fix.cjs" ]; then
+    export NODE_OPTIONS="--require $PREFIX/lib/node_android_fix.cjs"
+fi
 if [ -f "$HOME/.autostart_services.sh" ]; then
     bash "$HOME/.autostart_services.sh"
 fi
