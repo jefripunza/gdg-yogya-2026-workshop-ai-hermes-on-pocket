@@ -20,7 +20,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.0.0"
+MOBILE_SH_VERSION="v2.1.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -54,6 +54,8 @@ fi
 # ------------------------------------------------------------------------------
 echo -e "\n${BLUE}[1/6] [${MOBILE_SH_VERSION}] Mengatur repositori Termux ke Cloudflare Mirror (packages-cf.termux.dev)...${NC}"
 export DEBIAN_FRONTEND=noninteractive
+export TERMUX_APP_PACKAGE_MANAGER=apt
+chmod 755 "$PREFIX/bin/"* 2>/dev/null || true
 
 # Bersihkan total seluruh file di sources.list.d (seperti game.list, science.list, main.sources, dll.)
 mkdir -p "$PREFIX/etc/apt/sources.list.d" "$PREFIX/etc/apt/apt.conf.d" "$PREFIX/etc/apt/trusted.gpg.d" "$PREFIX/share/keyrings"
@@ -74,12 +76,14 @@ ln -sf "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev" "$PREFIX/etc/
 # Unduh langsung GPG Public Key resmi Termux (5A897D96E57CF20C - termux-autobuilds.gpg)
 # agar verifikasi signature packages-cf.termux.dev tidak gagal NO_PUBKEY 5A897D96E57CF20C
 echo -e "${BLUE}Mengunduh GPG Key resmi Termux (5A897D96E57CF20C)...${NC}"
-curl -fsSL "https://raw.githubusercontent.com/termux/termux-packages/master/packages/termux-keyring/termux-autobuilds.gpg" \
-    -o "$PREFIX/etc/apt/trusted.gpg.d/termux-autobuilds.gpg" 2>/dev/null || true
+if command -v wget >/dev/null 2>&1; then
+    wget -qO "$PREFIX/etc/apt/trusted.gpg.d/termux-autobuilds.gpg" \
+        "https://raw.githubusercontent.com/termux/termux-packages/master/packages/termux-keyring/termux-autobuilds.gpg" 2>/dev/null || true
+else
+    curl -fsSL "https://raw.githubusercontent.com/termux/termux-packages/master/packages/termux-keyring/termux-autobuilds.gpg" \
+        -o "$PREFIX/etc/apt/trusted.gpg.d/termux-autobuilds.gpg" 2>/dev/null || true
+fi
 cp -f "$PREFIX/etc/apt/trusted.gpg.d/termux-autobuilds.gpg" "$PREFIX/share/keyrings/termux-autobuilds.gpg" 2>/dev/null || true
-
-curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5A897D96E57CF20C" \
-    -o "$PREFIX/etc/apt/trusted.gpg.d/termux-5A897D96E57CF20C.asc" 2>/dev/null || true
 
 # Gunakan [trusted=yes] & AllowInsecureRepositories sebagai pengaman ganda
 echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
@@ -95,7 +99,7 @@ Dpkg::Options {
 EOF
 echo -e "${GREEN}✓ [${MOBILE_SH_VERSION}] Repo Termux dikunci ke: $(cat "$PREFIX/etc/apt/sources.list")${NC}"
 
-echo -e "\n${BLUE}[${MOBILE_SH_VERSION}] Memperbarui keyring dan menginstal paket-paket dasar Termux via apt-get...${NC}"
+echo -e "\n${BLUE}[${MOBILE_SH_VERSION}] Memperbarui seluruh library sistem (dist-upgrade) agar curl & node sinkron...${NC}"
 # Gunakan apt-get secara langsung (bukan wrapper pkg) agar sources.list tidak ditimpa balik ke termux.net
 apt-get update -y \
     -o Acquire::AllowInsecureRepositories=true \
@@ -117,9 +121,28 @@ apt-get update -y \
     -o Acquire::AllowInsecureRepositories=true \
     -o APT::Get::AllowUnauthenticated=true
 
+# WAJIB dist-upgrade agar libc++, libngtcp2, openssl, libcurl, dan bash ter-upgrade serentak
+# (Mencegah error CANNOT LINK EXECUTABLE pada curl: ngtcp2_crypto_ossl_free & node: __hash_memory)
+apt-get dist-upgrade -y --allow-unauthenticated \
+    -o Acquire::AllowInsecureRepositories=true \
+    -o APT::Get::AllowUnauthenticated=true \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold"
+
+# Pastikan kembali sources.list tetap di Cloudflare Mirror pasca dist-upgrade
+echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
+chmod 755 "$PREFIX/bin/"* 2>/dev/null || true
+
 apt-get install -y --allow-unauthenticated \
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
+    libc++ \
+    libngtcp2 \
+    libnghttp2 \
+    libnghttp3 \
+    openssl \
+    libssh2 \
+    libcurl \
     curl \
     wget \
     git \

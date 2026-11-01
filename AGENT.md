@@ -165,7 +165,7 @@ Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
    bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh
    ```
 4. **Aturan Versi `mobile.sh` (`MOBILE_SH_VERSION`)**:
-   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.0.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
+   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.1.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
 5. **Pembaruan Task**:
    - Setelah selesai mengimplementasikan fitur atau perbaikan bug, perbarui checklist dan riwayat di `TODO.md`.
 
