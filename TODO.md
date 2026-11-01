@@ -115,6 +115,12 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Memperbaiki lebar kotak judul dan posisi vertikal pada **Slide 8, 9, 10, 11, dan 17** agar judul 1 baris tidak lagi terlipat (*wrapping*) dan bertabrakan dengan subjudul/deskripsi di bawahnya.
   - Memperbarui daftar 4 topik Telegram Forum di **Slide 4, 5, 14, 15, 18**, `README.md`, dan `PROMPT_PPT.md` menjadi **`#Learning`**, **`#Research`**, **`#Daily-Planner`**, dan **`#Coding`**.
   - Menambahkan profil pemateri beserta tautan **LinkedIn** (`https://id.linkedin.com/in/jefri-herdi-triyanto`) dan **Instagram** (`@jefripunza`) ke dalam `README.md`.
+- [x] **Revisi Final Slide 1, 2, 9, 11, 15, 19 & Auto-Switch Repo Termux ke Cloudflare Mirror (`packages-cf.termux.dev`)**:
+  - Menggunakan 6 file logo asli di `assets/` pada `assets/1.1.tech-stack-icons.png` untuk Slide 1 (murni berjajar tanpa badge/teks) dan menghapus garis pemisah putih di dalam kartu bawah Slide 7, 12, 13, 14, 16, 17, 18.
+  - Memisahkan baris `GitHub` dan `Web` pada Slide 2 serta mengganti kotak `CEO`/`ENG`/`R&D` di kanan dengan daftar vertikal **Pengalaman Profesional (LinkedIn)**.
+  - Menghapus blok `CLI` pada Slide 9 dan memperjelas label perintah instalasi untuk **Termux (HP Android)**, **Linux & macOS**, dan **Windows**.
+  - Menambahkan label `STEP 03` pada Slide 11, memperjelas persiapan Mobile & Laptop di `README.md`, dan memisahkan baris teks sosial pemateri di Slide 19.
+  - Mengonfigurasi `mobile.sh` agar otomatis mengarahkan repo APT Termux (`$PREFIX/etc/apt/sources.list` dan `$PREFIX/etc/termux/chosen_mirrors`) dari `termux.net` ke mirror cepat Cloudflare (`https://packages-cf.termux.dev/apt/termux-main stable main`) sebelum `pkg update`.
 
 ---
 

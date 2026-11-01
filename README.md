@@ -29,12 +29,24 @@ flowchart TD
 
 ## 📋 Persiapan Sebelum Mulai
 
-Pastikan Anda telah menyiapkan hal-hal berikut di smartphone Anda:
+Pastikan Anda telah menyiapkan hal-hal berikut sesuai perangkat yang Anda gunakan:
 
-1. **Aplikasi Termux**: Unduh dan pasang dari [F-Droid](https://f-droid.org/en/packages/com.termux/) (Disarankan: jangan gunakan versi Google Play Store karena sudah tidak diperbarui).
-2. **Koneksi Internet**: Diperlukan untuk mengunduh paket dan mengakses API.
-3. **Google Gemini API Key**: Dapatkan API Key gratis di [Google AI Studio](https://aistudio.google.com/).
-4. **Akun Telegram**: Untuk membuat Bot dan ruang obrolan asisten AI Anda.
+### 🔑 Kebutuhan Umum (Wajib untuk Semua Peserta)
+1. **Google Gemini API Key**: Dapatkan API Key gratis di [Google AI Studio](https://aistudio.google.com/).
+2. **Akun Telegram Aktif**: Digunakan untuk membuat Bot melalui `@BotFather` dan ruang obrolan asisten AI berfitur **Topics**.
+3. **Koneksi Internet**: Diperlukan untuk mengunduh paket/container dan terhubung ke API Gemini & Telegram.
+
+### 📱 Jalur 1 — Pengguna Smartphone Android
+1. **Aplikasi Termux**: Unduh dan pasang dari [F-Droid](https://f-droid.org/en/packages/com.termux/) *(Penting: jangan gunakan versi Google Play Store karena sudah usang dan tidak diperbarui)*.
+2. **Pengaturan Baterai**: Disarankan mengatur izin penggunaan baterai aplikasi Termux ke **"Unrestricted" / "Tidak Dibatasi"** agar proses AI tetap hidup di latar belakang saat layar terkunci.
+
+### 💻 Jalur 2 — Pengguna Laptop (macOS, Linux, atau Windows / Pengguna iOS)
+1. **Docker & Docker Compose**:
+   - **Windows / macOS**: Unduh, pasang, dan pastikan aplikasi **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** sudah menyala (*running*).
+   - **Linux**: Pastikan **Docker Engine** dan plugin **`docker compose`** sudah terpasang serta layanan daemon Docker sudah aktif (`sudo systemctl start docker`).
+2. **Aplikasi Terminal**:
+   - **macOS / Linux**: Gunakan aplikasi **Terminal** bawaan (`bash` / `zsh`) dengan `curl` terpasang.
+   - **Windows**: Gunakan **PowerShell** atau **Command Prompt (CMD)** bawaan Windows.
 
 ---
 

@@ -46,11 +46,29 @@ if command -v termux-wake-lock >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------------------------
-# 1. Update & Dependensi Dasar
+# 1. Konfigurasi Repo Cepat (Cloudflare Mirror) & Dependensi Dasar
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[1/6] Memeriksa dan menginstal paket-paket dasar Termux...${NC}"
-pkg update -y
-pkg install -y \
+echo -e "\n${BLUE}[1/6] Mengatur repositori Termux ke Cloudflare Mirror (packages-cf.termux.dev)...${NC}"
+mkdir -p "$PREFIX/etc/apt" "$PREFIX/etc/termux/mirrors/default"
+cat << 'EOF' > "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev"
+# This file is sourced by pkg
+WEIGHT=10
+MAIN="https://packages-cf.termux.dev/apt/termux-main"
+ROOT="https://packages-cf.termux.dev/apt/termux-root"
+X11="https://packages-cf.termux.dev/apt/termux-x11"
+EOF
+rm -rf "$PREFIX/etc/termux/chosen_mirrors"
+ln -s "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev" "$PREFIX/etc/termux/chosen_mirrors"
+echo "deb https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
+if [ -d "$PREFIX/etc/apt/sources.list.d" ]; then
+    sed -i 's|https\?://[^/]*termux\.net[^ ]*|https://packages-cf.termux.dev/apt/termux-main|g' "$PREFIX/etc/apt/sources.list.d/"*.list 2>/dev/null || true
+fi
+echo -e "${GREEN}✓ Repo Termux diarahkan ke: https://packages-cf.termux.dev/apt/termux-main${NC}"
+
+echo -e "\n${BLUE}Memeriksa dan menginstal paket-paket dasar Termux...${NC}"
+export DEBIAN_FRONTEND=noninteractive
+pkg update -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
+pkg install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
     curl \
     wget \
     git \
