@@ -29,10 +29,10 @@ git clone https://github.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-poc
 cd gdg-yogya-2026-workshop-ai-hermes-on-pocket
 
 # 2. Reset dan jalankan simulator Termux Docker:
-./restart.sh
+./build/restart.sh
 
 # 3. Jalankan pengujian instalasi lokal:
-./install.sh
+./build/install.sh
 
 # 4. Buka dashboard di browser untuk memverifikasi:
 #    - 9Router : http://localhost:20128 (Password: 123456)
@@ -93,13 +93,16 @@ Sebelum mengajukan Pull Request (PR), pastikan kode Anda mematuhi standar beriku
 2. **Validasi Sintaks Script**:
    Pastikan tidak ada kesalahan sintaksis bash sebelum commit:
    ```bash
-   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh
+   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n build/install.sh && bash -n build/restart.sh && bash -n build/diagnose.sh && bash -n laptop.sh
    ```
-3. **Pemisahan Konteks `README.md`**:
+3. **Struktur Folder `build/`**:
+   - File build, RnD simulator, dan catatan task pengembang disimpan di dalam folder `build/` (`build/restart.sh`, `build/install.sh`, `build/Dockerfile`, `build/diagnose.sh`, `build/TODO.md`).
+   - Root direktori difokuskan untuk script yang dieksekusi langsung oleh peserta workshop (`mobile.sh`, `hc.sh`, `ht.sh`, `laptop.sh`).
+4. **Pemisahan Konteks `README.md`**:
    - `README.md` ditujukan khusus untuk **peserta workshop**. Jangan memasukkan perintah Docker host ke dalam `README.md`.
    - Detail teknis simulator Docker dan catatan arsitektur disimpan di `AGENT.md` dan `CONTRIBUTING.md`.
-4. **Pembaruan `TODO.md`**:
-   - Jika PR Anda menyelesaikan suatu task atau menambahkan kapabilitas baru, pastikan untuk memperbarui daftar checklist di `TODO.md`.
+5. **Pembaruan `build/TODO.md`**:
+   - Jika PR Anda menyelesaikan suatu task atau menambahkan kapabilitas baru, pastikan untuk memperbarui daftar checklist di `build/TODO.md`.
 
 ---
 

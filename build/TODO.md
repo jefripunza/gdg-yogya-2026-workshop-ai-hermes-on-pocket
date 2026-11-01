@@ -128,6 +128,11 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Menghapus flag invalid `--skip-build` dari pemanggilan `hermes dashboard` di `mobile.sh` dan `hc.sh` yang menyebabkan Hermes Dashboard crash seketika dan membuat `localhost:9119` mengembalikan `ERR_EMPTY_RESPONSE`.
   - Memperbaiki izin eksekusi (`chmod 755 $PREFIX/bin/bash $PREFIX/bin/sh $PREFIX/bin/termux-setup-package-manager`) untuk menanggulangi traceback `py3compile Permission denied`.
   - Menambahkan auto-restart socat relay dan health check interaktif pada `hc.sh` yang otomatis menampilkan log jika dashboard gagal aktif.
+- [x] **Perbaikan Android 15 Bionic Linker, esbuild Hook, & Refactoring Folder `build/` (`v2.4.0`)**:
+  - Memperbaiki error Android 15 `has bad ELF magic: 23212f64` / `23212f75` pada `node-deps.mjs` dan `esbuild` dengan membuat Universal Android Node Hook (`$PREFIX/lib/node_android_fix.cjs`) yang dimuat otomatis via `NODE_OPTIONS`.
+  - Mengeliminasi freeze/stuck berjam-jam pada tahap `Menyelaraskan shebang` dengan membatasi `termux-fix-shebang` hanya pada binary tools utama (`bin/*`, `tools/npm/bin/*`) tanpa memindai rekursif ke dalam 50.000+ file `node_modules`.
+  - Merapikan struktur repositori dengan memindahkan file pendukung build & RnD ke folder `build/`: `build/diagnose.sh`, `build/Dockerfile`, `build/install.sh`, `build/restart.sh`, dan `build/TODO.md`.
+  - Menyesuaikan referensi path project root di `build/install.sh` & `build/restart.sh`, serta memperbarui `CONTRIBUTING.md` dan `AGENT.md`.
 
 ---
 

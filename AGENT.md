@@ -5,7 +5,7 @@ Dokumen ini adalah **Memory & Invariant Guide** bagi AI Agent / pengembang yang 
 > **PENTING UNTUK AGENT**:
 > 1. Baca dokumen ini sebelum melakukan perubahan arsitektur atau scripting.
 > 2. Jaga pemisahan konteks: **Peserta Workshop** (Termux Android fisik) vs **RnD Simulator** (Docker di macOS/Linux).
-> 3. Setiap kali menyelesaikan task baru, **wajib perbarui `TODO.md`**.
+> 3. Setiap kali menyelesaikan task baru, **wajib perbarui `build/TODO.md`**.
 
 ---
 
@@ -26,16 +26,17 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 | `docker-compose.yml` | **Laptop Docker** | Spesifikasi compose multi-container (`decolua/9router` & `nousresearch/hermes-agent`). |
 | `hc.sh` | **Termux & Laptop** | Script konfigurasi Hermes (`./hc.sh <combo> <api-key>`) untuk menghubungkan Hermes ke 9Router. |
 | `ht.sh` | **Termux & Laptop** | Script integrasi Telegram (`./ht.sh <token> [userid]`) untuk mengaktifkan bot Hermes di Telegram. |
-| `restart.sh` | **Host Docker (RnD)** | Script reset container Docker `termux-rnd` di macOS/Linux dengan port forwarding lengkap. |
-| `install.sh` | **Host Docker (RnD)** | Script pengujian lokal: menyalin script ke container dan menjalankan `mobile.sh --local`. |
-| `Dockerfile` | **Host Docker (RnD)** | Base image Termux container (`termux/termux-docker:latest`). |
+| `build/restart.sh` | **Host Docker (RnD)** | Script reset container Docker `termux-rnd` di macOS/Linux dengan port forwarding lengkap. |
+| `build/install.sh` | **Host Docker (RnD)** | Script pengujian lokal: menyalin script ke container dan menjalankan `mobile.sh --local`. |
+| `build/Dockerfile` | **Host Docker (RnD)** | Base image Termux container (`termux/termux-docker:latest`). |
+| `build/diagnose.sh` | **Termux / Troubleshooting** | Script diagnosa kesehatan lingkungan Termux, binary Hermes, port, dan log service. |
 | `README.md` | **Publik / Peserta** | Panduan ramah pemula untuk peserta workshop (100% bebas dari istilah Docker RnD). |
 | `TITLE.md` | **Proposal / Event** | Generator & kurasi pilihan judul workshop untuk diajukan ke panitia GDG. |
 | `PROMPT_PPT.md` | **Presentasi / Slide** | Blueprint pemetaan layout template PPTX DevFest 2026 & draft materi 19 slide workshop. |
 | `assets/template.pptx` | **Master Style PPTX** | Salinan murni template asli (12 layout archetype) sebagai acuan permanen pemetaan style oleh AI. |
 | `assets/DevFest Jogjakarta 2026 - Workshop AI.pptx` | **Output Slide PPTX** | File presentasi utama workshop yang di-generate/diperbarui berdasarkan `PROMPT_PPT.md` & `template.pptx`. |
 | `assets/<slide>.<urut>.<judul>.png` | **Aset Visual Slide** | 24 aset gambar (`1.1` ikon tech stack, `2.1` foto profil, `4.1` diagram arsitektur `.svg`/`.png`, `7.1`, `9.1` QR code GitHub berlogo GDG, `9.2` logo GDG transparan, & `12.1`–`18.3` screenshot tutorial) sesuai nomor slide & urutan. |
-| `TODO.md` | **Kontributor / Agent** | Catatan task yang sudah selesai dan daftar rencana backlog. |
+| `build/TODO.md` | **Kontributor / Agent** | Catatan task yang sudah selesai dan daftar rencana backlog. |
 | `CONTRIBUTING.md` | **Kontributor** | Panduan kontribusi open-source, standar script, dan tata cara testing. |
 
 ---
@@ -118,11 +119,11 @@ Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
 ### Skenario A: Di Komputer Developer (Simulasi Docker macOS/Linux)
 1. **Reset & Jalankan Container**:
    ```bash
-   ./restart.sh
+   ./build/restart.sh
    ```
 2. **Jalankan Instalasi Otomatis (Mode Lokal)**:
    ```bash
-   ./install.sh
+   ./build/install.sh
    ```
 3. **Verifikasi Web Dashboard di Browser Host**:
    - Buka `http://localhost:20128` (Password: `123456`) -> Tambahkan Provider Gemini API & buat Combo `gdg-yogya` -> Salin API Key.
@@ -155,17 +156,17 @@ Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
 
 1. **Pengujian Lokal (RnD)**:
    ```bash
-   ./install.sh
+   ./build/install.sh
    ```
 2. **Validasi Port**:
    - `http://localhost:20128` -> 9Router Dashboard (Password: `123456`)
    - `http://localhost:9119` -> Hermes Web Dashboard
 3. **Validasi Sintaks Script**:
    ```bash
-   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh
+   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n build/install.sh && bash -n build/restart.sh && bash -n build/diagnose.sh && bash -n laptop.sh
    ```
 4. **Aturan Versi `mobile.sh` (`MOBILE_SH_VERSION`)**:
-   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.3.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
+   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.6.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
 5. **Pembaruan Task**:
-   - Setelah selesai mengimplementasikan fitur atau perbaikan bug, perbarui checklist dan riwayat di `TODO.md`.
+   - Setelah selesai mengimplementasikan fitur atau perbaikan bug, perbarui checklist dan riwayat di `build/TODO.md`.
 

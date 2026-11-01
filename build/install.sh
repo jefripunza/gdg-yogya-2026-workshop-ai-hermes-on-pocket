@@ -8,9 +8,10 @@ set -e
 
 CONTAINER_NAME="termux-rnd"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MOBILE_SCRIPT="${SCRIPT_DIR}/mobile.sh"
-HC_SCRIPT="${SCRIPT_DIR}/hc.sh"
-HT_SCRIPT="${SCRIPT_DIR}/ht.sh"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+MOBILE_SCRIPT="${PROJECT_ROOT}/mobile.sh"
+HC_SCRIPT="${PROJECT_ROOT}/hc.sh"
+HT_SCRIPT="${PROJECT_ROOT}/ht.sh"
 
 # Warna output terminal
 GREEN='\033[0;32m'

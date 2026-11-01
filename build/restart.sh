@@ -12,7 +12,8 @@ IMAGE_NAME="termux-rnd:latest"
 HOST_PORT="8080"
 CONTAINER_PORT="8080"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE_HOST="${SCRIPT_DIR}/workspace"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+WORKSPACE_HOST="${PROJECT_ROOT}/workspace"
 WORKSPACE_CONTAINER="/data/data/com.termux/files/home/workspace"
 
 # Warna terminal
