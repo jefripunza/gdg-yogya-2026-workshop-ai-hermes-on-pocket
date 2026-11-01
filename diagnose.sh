@@ -3,7 +3,7 @@
 # diagnose.sh - Diagnostic & Troubleshooting Script untuk Real Device (Termux)
 # ==============================================================================
 
-DIAGNOSE_SH_VERSION="v1.0.0"
+DIAGNOSE_SH_VERSION="v1.1.0"
 
 REPORT_FILE="$HOME/diag_report.txt"
 exec > >(tee "$REPORT_FILE") 2>&1
@@ -76,16 +76,57 @@ else
     echo "[!] 'hermes' tidak dapat dijalankan."
 fi
 
-# 8. Tes Jalankan Hermes Dashboard Foreground (5 Detik)
-echo -e "\n--- [8] Test Direct: Launching hermes dashboard (5s trial) ---"
+# 8. Inspeksi Struktur File Hermes Web & Script Build (node-deps.mjs)
+echo -e "\n--- [8] Hermes Web & Build Files Inspection ---"
+HERMES_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent"
+NODE_DEPS="$HERMES_LIB/app/scripts/build/node-deps.mjs"
+
+if [ -f "$NODE_DEPS" ]; then
+    echo "Ditemukan node-deps.mjs di: $NODE_DEPS"
+    echo "--- Cuplikan Baris 60-100 ---"
+    sed -n '60,100p' "$NODE_DEPS" 2>/dev/null || true
+    echo "--- Cuplikan Baris 140-180 ---"
+    sed -n '140,180p' "$NODE_DEPS" 2>/dev/null || true
+else
+    echo "[!] $NODE_DEPS tidak ditemukan."
+fi
+
+echo -e "\nMencari folder dist/ atau build di hermes-agent:"
+find "$HERMES_LIB" -maxdepth 4 -type d -name "dist" 2>/dev/null || true
+
+echo -e "\nCek isi tools/npm di hermes-agent:"
+ls -la "$HERMES_LIB/tools/npm/bin" 2>/dev/null || true
+ls -la "$HERMES_LIB/tools/npm/lib/node_modules/npm/bin" 2>/dev/null || true
+file "$HERMES_LIB/tools/npm/lib/node_modules/npm/bin/npm-cli.js" 2>/dev/null || true
+head -n 5 "$HERMES_LIB/tools/npm/lib/node_modules/npm/bin/npm-cli.js" 2>/dev/null || true
+
+# 9. Tes hermes dashboard DENGAN --skip-build (Mode Tanpa Kompilasi Ulang)
+echo -e "\n--- [9] Test Direct: Launching hermes dashboard WITH --skip-build (5s trial) ---"
 TMPDIR="${TMPDIR:-$PREFIX/tmp}"
 mkdir -p "$TMPDIR"
-TEST_LOG="$TMPDIR/test_dashboard.log"
-TEST_LOG2="$TMPDIR/test_9119.log"
+TEST_LOG_SKIP="$TMPDIR/test_skip_build.log"
 
 if command -v hermes >/dev/null 2>&1; then
+    echo "Mencoba start: hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build ..."
+    hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build > "$TEST_LOG_SKIP" 2>&1 &
+    TEST_PID_SKIP=$!
+    sleep 3
+    if kill -0 $TEST_PID_SKIP 2>/dev/null; then
+        echo "✓ hermes dashboard WITH --skip-build BERHASIL HIDUP (PID: $TEST_PID_SKIP)!"
+        echo "Response curl http://127.0.0.1:9118:"
+        curl -sI "http://127.0.0.1:9118" 2>&1 | head -n 10 || true
+        kill -9 $TEST_PID_SKIP 2>/dev/null || true
+    else
+        echo "[!] hermes dashboard --skip-build tidak tetap hidup. Log output:"
+        cat "$TEST_LOG_SKIP" 2>/dev/null || true
+    fi
+fi
+
+# 10. Tes hermes dashboard STANDAR (Tanpa --skip-build)
+echo -e "\n--- [10] Test Direct: Launching standard hermes dashboard (5s trial) ---"
+TEST_LOG="$TMPDIR/test_dashboard.log"
+if command -v hermes >/dev/null 2>&1; then
     echo "Mencoba start: hermes dashboard --host 127.0.0.1 --port 9118 --no-open ..."
-    # Jalankan di background sementara selama 5 detik untuk menangkap outputnya
     hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$TEST_LOG" 2>&1 &
     TEST_PID=$!
     sleep 3
@@ -95,26 +136,8 @@ if command -v hermes >/dev/null 2>&1; then
         curl -sI "http://127.0.0.1:9118" 2>&1 | head -n 5 || true
         kill -9 $TEST_PID 2>/dev/null || true
     else
-        echo "[!] hermes dashboard MATI SEKETIKA setelah dijalankan!"
-        echo "Isi error output $TEST_LOG:"
-        cat "$TEST_LOG"
-    fi
-fi
-
-# 9. Tes Alternatif: hermes dashboard langsung di port 9119
-echo -e "\n--- [9] Test Direct: Launching on port 9119 directly (3s trial) ---"
-if command -v hermes >/dev/null 2>&1; then
-    hermes dashboard --host 127.0.0.1 --port 9119 --no-open > "$TEST_LOG2" 2>&1 &
-    TEST_PID2=$!
-    sleep 2
-    if kill -0 $TEST_PID2 2>/dev/null; then
-        echo "✓ hermes dashboard BERHASIL HIDUP di 9119 (PID: $TEST_PID2)!"
-        echo "Response curl http://127.0.0.1:9119:"
-        curl -sI "http://127.0.0.1:9119" 2>&1 | head -n 5 || true
-        kill -9 $TEST_PID2 2>/dev/null || true
-    else
-        echo "[!] hermes dashboard di port 9119 mati. Error output:"
-        cat "$TEST_LOG2"
+        echo "[!] hermes dashboard standar gagal. Output:"
+        cat "$TEST_LOG" 2>/dev/null || true
     fi
 fi
 
