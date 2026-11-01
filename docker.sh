@@ -48,7 +48,7 @@ show_info() {
     echo -e "${GREEN}   Container Berhasil Berjalan!                                 ${NC}"
     echo -e "${BLUE}================================================================${NC}"
     echo -e "🔹 9Router Web Dashboard : ${YELLOW}http://localhost:20128${NC} (Password: 123456)"
-    echo -e "🔹 Hermes Web Dashboard  : ${YELLOW}http://localhost:9119${NC}"
+    echo -e "🔹 Hermes Web Dashboard  : ${YELLOW}http://localhost:9119${NC} (User: admin / Pass: 123456)"
     echo -e "🔹 Hermes Gateway API    : ${YELLOW}http://localhost:8642${NC}"
     echo -e ""
     echo -e "Langkah Selanjutnya (Setup Helper di Dalam Container):"

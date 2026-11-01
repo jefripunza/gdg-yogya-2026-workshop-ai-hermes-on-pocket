@@ -188,12 +188,16 @@ services:
       - "8642:8642"
     environment:
       - HERMES_HOME=/opt/data
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_HOST=0.0.0.0
+      - HERMES_DASHBOARD_PORT=9119
+      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456
       - INITIAL_PASSWORD=123456
     volumes:
       - hermes_data:/opt/data
     depends_on:
       - 9router
-    command: sh -c "hermes gateway run 2>/dev/null || sleep infinity"
 
 volumes:
   9router_data:
@@ -255,7 +259,7 @@ Lalu jalankan langkah konfigurasi yang sama persis seperti di ponsel Android:
    ```
 
 3. **Buka Web UI Dashboard**:
-   Buka browser laptop Anda ke **`http://localhost:9119`** untuk berinteraksi langsung via Web Dashboard, atau buka aplikasi Telegram dan ajak bot Anda mengobrol!
+   Buka browser laptop Anda ke **`http://localhost:9119`** (Masukkan Username: **`admin`** dan Password: **`123456`**) untuk berinteraksi langsung via Web Dashboard, atau buka aplikasi Telegram dan ajak bot Anda mengobrol!
 
 ---
 

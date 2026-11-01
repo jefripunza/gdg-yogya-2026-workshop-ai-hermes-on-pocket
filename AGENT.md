@@ -62,13 +62,23 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 - Antarmuka web UI membutuhkan perintah: `hermes dashboard`.
 - **Pre-build Step**: Pada kali pertama dijalankan, Hermes membangun aset web (`npm/node-deps` + build) yang memakan waktu ~15-20 detik. Pre-build harus dipicu saat instalasi di `mobile.sh`, dan sesi background harian harus memakai flag `--skip-build`.
 
-### 6. Kebijakan Keamanan Hermes Dashboard & Solusi Socat Relay
-- Hermes dashboard menolak di-bind ke non-loopback `0.0.0.0` jika belum ada auth provider external (OAuth/Nous Portal).
-- Di Linux, proses tidak bisa membinding `0.0.0.0:9119` jika port `127.0.0.1:9119` sudah terisi oleh proses lain (`Address already in use`).
-- **Arsitektur Relay yang Benar**:
+### 6. Kebijakan Keamanan Hermes Dashboard & Solusi Binding (Termux vs Docker Compose)
+- Hermes dashboard menolak di-bind ke non-loopback `0.0.0.0` jika belum ada auth provider external (OAuth/Nous Portal) atau Basic Auth.
+- **Di Termux (Android)**:
   1. Hermes dashboard di-bind ke loopback port internal: `127.0.0.1:9118`.
   2. `socat` di-bind ke `0.0.0.0:9119` meneruskan koneksi ke `127.0.0.1:9118`.
-  3. Dengan pemisahan port ini, baik browser di HP (`localhost:9119`) maupun browser di Docker host (`localhost:9119`) dapat mengakses dashboard dengan lancar.
+  3. Dengan pemisahan port ini, baik browser di HP (`localhost:9119`) maupun browser di Docker host (`localhost:9119`) dapat mengakses dashboard tanpa memicu policy auth non-loopback Hermes.
+- **Di Docker Compose (`nousresearch/hermes-agent`)**:
+  - Image resmi Hermes mengaktifkan s6-overlay service `dashboard`. Jika environment auth tidak disetel, dashboard otomatis membatasi diri ke loopback container `127.0.0.1:9119`, menyebabkan request dari host Docker drop dengan error **`ERR_CONNECTION_RESET`**.
+  - **Solusi**: Wajib menyuntikkan environment:
+    ```yaml
+    - HERMES_DASHBOARD=1
+    - HERMES_DASHBOARD_HOST=0.0.0.0
+    - HERMES_DASHBOARD_PORT=9119
+    - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+    - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456
+    ```
+    Hal ini membuat dashboard mengekspos `0.0.0.0:9119` secara aman dengan Basic Auth (`admin` / `123456`).
 
 ### 7. Dependensi Platform Telegram (`python-telegram-bot` & `libheif`)
 - Hermes Agent membutuhkan `python-telegram-bot[webhooks]==22.8` agar adapter Telegram dapat berjalan.
