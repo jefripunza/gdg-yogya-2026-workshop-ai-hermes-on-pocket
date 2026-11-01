@@ -96,6 +96,8 @@ cat << EOF >> "$ENV_FILE"
 OPENAI_BASE_URL=${PROXY_URL}
 OPENAI_API_KEY=${API_KEY}
 CUSTOM_API_KEY=${API_KEY}
+HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456
 EOF
 
 echo -e "${GREEN}✓ File .env berhasil diperbarui.${NC}"
@@ -110,26 +112,33 @@ if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
 fi
 nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 
-# Restart atau jalankan Hermes Dashboard
-if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
-    echo -e "${YELLOW}Merestart Hermes Dashboard...${NC}"
-    pkill -f "hermes.*dashboard" || true
-    sleep 1
-fi
-
-if command -v socat >/dev/null 2>&1; then
-    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
-    sleep 1
-    if ! pgrep -f "socat.*9119" >/dev/null 2>&1; then
-        nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
-    fi
-else
-    # Jika tidak ada socat (misal Docker container biasa), bind langsung ke 0.0.0.0:9119
-    nohup hermes dashboard --host 0.0.0.0 --port 9119 --no-open --skip-build > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
-fi
+# Restart atau jalankan Hermes Dashboard & Relay
+echo -e "${YELLOW}Merestart Hermes Dashboard & Relay...${NC}"
+pkill -f "hermes.*dashboard" || true
+pkill -f "socat.*9119" || true
 sleep 1
 
+if command -v socat >/dev/null 2>&1; then
+    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    sleep 2
+    nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
+else
+    # Jika tidak ada socat (misal Docker container biasa), bind langsung ke 0.0.0.0:9119
+    nohup hermes dashboard --host 0.0.0.0 --port 9119 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+fi
+sleep 2
+
 PID_GW=$(pgrep -f "hermes.*gateway" | head -n 1 || true)
+PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)
+
+if [ -n "$PID_HD" ]; then
+    echo -e "${GREEN}✓ Hermes Web Dashboard aktif (PID: ${PID_HD}) -> http://localhost:9119${NC}"
+else
+    echo -e "${YELLOW}[PERINGATAN] Hermes Dashboard belum berjalan. Memeriksa log...${NC}"
+    if [ -f "$HERMES_DIR/logs/dashboard.log" ]; then
+        tail -n 15 "$HERMES_DIR/logs/dashboard.log"
+    fi
+fi
 
 echo -e "\n${BLUE}================================================================${NC}"
 echo -e "${GREEN}✓ Konfigurasi Hermes Berhasil Diterapkan!${NC}"

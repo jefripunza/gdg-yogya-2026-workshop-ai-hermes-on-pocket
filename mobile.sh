@@ -20,7 +20,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.1.0"
+MOBILE_SH_VERSION="v2.2.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -55,7 +55,8 @@ fi
 echo -e "\n${BLUE}[1/6] [${MOBILE_SH_VERSION}] Mengatur repositori Termux ke Cloudflare Mirror (packages-cf.termux.dev)...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 export TERMUX_APP_PACKAGE_MANAGER=apt
-chmod 755 "$PREFIX/bin/"* 2>/dev/null || true
+chmod 755 "$PREFIX/bin/bash" "$PREFIX/bin/sh" "$PREFIX/bin/termux-setup-package-manager" 2>/dev/null || true
+chmod +x "$PREFIX/bin"/* 2>/dev/null || true
 
 # Bersihkan total seluruh file di sources.list.d (seperti game.list, science.list, main.sources, dll.)
 mkdir -p "$PREFIX/etc/apt/sources.list.d" "$PREFIX/etc/apt/apt.conf.d" "$PREFIX/etc/apt/trusted.gpg.d" "$PREFIX/share/keyrings"
@@ -131,7 +132,8 @@ apt-get dist-upgrade -y --allow-unauthenticated \
 
 # Pastikan kembali sources.list tetap di Cloudflare Mirror pasca dist-upgrade
 echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
-chmod 755 "$PREFIX/bin/"* 2>/dev/null || true
+chmod 755 "$PREFIX/bin/bash" "$PREFIX/bin/sh" "$PREFIX/bin/termux-setup-package-manager" 2>/dev/null || true
+chmod +x "$PREFIX/bin"/* 2>/dev/null || true
 
 apt-get install -y --allow-unauthenticated \
     -o Dpkg::Options::="--force-confdef" \
@@ -245,20 +247,19 @@ if command -v termux-fix-shebang >/dev/null 2>&1; then
 fi
 echo -e "${GREEN}✓ 9Router berhasil diinstal!${NC}"
 
-# Pre-build Web UI Hermes agar saat autostart langsung instan & tidak timeout
-if command -v hermes >/dev/null 2>&1; then
-    echo -e "\n${BLUE}Mempersiapkan Web UI Dashboard Hermes (initial build)...${NC}"
-    if [ ! -d "$PREFIX/lib/hermes-agent/app/hermes_cli/web_dist" ]; then
-        hermes dashboard --host 127.0.0.1 --port 9118 --no-open >/dev/null 2>&1 &
-        for i in $(seq 1 40); do
-            if [ -d "$PREFIX/lib/hermes-agent/app/hermes_cli/web_dist" ] || netstat -tlpn 2>/dev/null | grep -q "9118"; then
-                break
-            fi
-            sleep 1
-        done
-        hermes dashboard --stop >/dev/null 2>&1 || pkill -f "hermes.*dashboard" || true
-    fi
-    echo -e "${GREEN}✓ Web UI Dashboard Hermes siap!${NC}"
+# Inisialisasi kredensial dasar Hermes
+HERMES_DIR="${HERMES_HOME:-$HOME/.hermes}"
+mkdir -p "$HERMES_DIR" "$HERMES_DIR/logs"
+if [ ! -f "$HERMES_DIR/.env" ]; then
+    cat << 'EOF' > "$HERMES_DIR/.env"
+HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456
+EOF
+elif ! grep -q "HERMES_DASHBOARD_BASIC_AUTH_USERNAME" "$HERMES_DIR/.env" 2>/dev/null; then
+    cat << 'EOF' >> "$HERMES_DIR/.env"
+HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456
+EOF
 fi
 
 # ------------------------------------------------------------------------------
@@ -340,10 +341,14 @@ if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
     echo "[✓] Hermes Web Dashboard sudah berjalan (PID: $PID_HD) -> http://localhost:9119"
 elif command -v hermes >/dev/null 2>&1; then
     echo "[+] Menjalankan Hermes Web Dashboard di background..."
-    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open --skip-build > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
+    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
     sleep 2
     PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)
-    echo "[✓] Hermes Web Dashboard berhasil aktif (PID: $PID_HD) -> http://localhost:9119"
+    if [ -n "$PID_HD" ]; then
+        echo "[✓] Hermes Web Dashboard berhasil aktif (PID: $PID_HD) -> http://localhost:9119"
+    else
+        echo "[!] Hermes Web Dashboard gagal mulai. Cek log: cat ~/.hermes/logs/dashboard.log"
+    fi
 fi
 
 # 3. Pastikan Hermes Gateway berjalan (Telegram / Messaging Backend)

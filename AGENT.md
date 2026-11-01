@@ -64,15 +64,15 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 
 ### 5. Hermes Agent: Web UI Dashboard vs Gateway API
 - Perintah `hermes gateway` **hanya** menjalankan backend pesan (Telegram/Discord/Cron).
-- Antarmuka web UI membutuhkan perintah: `hermes dashboard`.
-- **Pre-build Step**: Pada kali pertama dijalankan, Hermes membangun aset web (`npm/node-deps` + build) yang memakan waktu ~15-20 detik. Pre-build harus dipicu saat instalasi di `mobile.sh`, dan sesi background harian harus memakai flag `--skip-build`.
+- Antarmuka web UI membutuhkan perintah: `hermes dashboard --host 127.0.0.1 --port 9118 --no-open`. (Catatan: CLI `hermes dashboard` tidak memiliki flag `--skip-build`; menyertakan flag tersebut menyebabkan crash `unrecognized arguments`).
 
 ### 6. Kebijakan Keamanan Hermes Dashboard & Solusi Binding (Termux vs Docker Compose)
 - Hermes dashboard menolak di-bind ke non-loopback `0.0.0.0` jika belum ada auth provider external (OAuth/Nous Portal) atau Basic Auth.
 - **Di Termux (Android)**:
-  1. Hermes dashboard di-bind ke loopback port internal: `127.0.0.1:9118`.
+  1. Hermes dashboard di-bind ke loopback port internal: `127.0.0.1:9118` via `hermes dashboard --host 127.0.0.1 --port 9118 --no-open`.
   2. `socat` di-bind ke `0.0.0.0:9119` meneruskan koneksi ke `127.0.0.1:9118`.
-  3. Dengan pemisahan port ini, baik browser di HP (`localhost:9119`) maupun browser di Docker host (`localhost:9119`) dapat mengakses dashboard tanpa memicu policy auth non-loopback Hermes.
+  3. Kredensial basic auth (`HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin` & `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456`) disimpan di `~/.hermes/.env`.
+  4. Dengan pemisahan port ini, baik browser di HP (`localhost:9119`) maupun browser di Docker host (`localhost:9119`) dapat mengakses dashboard tanpa memicu policy auth non-loopback Hermes.
 - **Di Docker Compose (`nousresearch/hermes-agent`)**:
   - Image resmi Hermes mengaktifkan s6-overlay service `dashboard`. Jika environment auth tidak disetel, dashboard otomatis membatasi diri ke loopback container `127.0.0.1:9119`, menyebabkan request dari host Docker drop dengan error **`ERR_CONNECTION_RESET`**.
   - **Solusi**: Wajib menyuntikkan environment:
@@ -165,7 +165,7 @@ Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
    bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh
    ```
 4. **Aturan Versi `mobile.sh` (`MOBILE_SH_VERSION`)**:
-   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.1.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
+   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.2.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
 5. **Pembaruan Task**:
    - Setelah selesai mengimplementasikan fitur atau perbaikan bug, perbarui checklist dan riwayat di `TODO.md`.
 
