@@ -3,7 +3,7 @@
 # diagnose.sh - Diagnostic & Troubleshooting Script untuk Real Device (Termux)
 # ==============================================================================
 
-DIAGNOSE_SH_VERSION="v1.2.0"
+DIAGNOSE_SH_VERSION="v1.3.0"
 
 REPORT_FILE="$HOME/diag_report.txt"
 exec > >(tee "$REPORT_FILE") 2>&1
@@ -76,30 +76,30 @@ else
     echo "[!] 'hermes' tidak dapat dijalankan."
 fi
 
-# 8. Inspeksi Struktur File Hermes Web & Script Build (node-deps.mjs)
+# 8. Inspeksi Struktur File Hermes Web & Script Build (node-deps.mjs & web.mjs)
 echo -e "\n--- [8] Hermes Web & Build Files Inspection ---"
 HERMES_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent"
 NODE_DEPS="$HERMES_LIB/app/scripts/build/node-deps.mjs"
+WEB_MJS="$HERMES_LIB/app/scripts/build/web.mjs"
+WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
 
-if [ -f "$NODE_DEPS" ]; then
-    echo "Ditemukan node-deps.mjs di: $NODE_DEPS"
-    echo "--- Cuplikan Baris 1-60 ---"
-    sed -n '1,60p' "$NODE_DEPS" 2>/dev/null || true
-    echo "--- Cuplikan Baris 100-140 ---"
-    sed -n '100,140p' "$NODE_DEPS" 2>/dev/null || true
+if [ -f "$WEB_MJS" ]; then
+    echo "Ditemukan web.mjs di: $WEB_MJS"
+    cat "$WEB_MJS" 2>/dev/null || true
 else
-    echo "[!] $NODE_DEPS tidak ditemukan."
+    echo "[!] $WEB_MJS tidak ditemukan."
 fi
 
-echo -e "\nUji Nilai process.execPath di Node.js:"
-echo -n "  System Node : "
-node -e "console.log(process.execPath)" 2>/dev/null || echo "Gagal run system node"
-echo -n "  Bundled Node: "
-"$HERMES_LIB/tools/node/data/data/com.termux/files/usr/bin/node" -e "console.log(process.execPath)" 2>/dev/null || echo "Gagal run bundled node"
+echo -e "\nStatus folder web_dist ($WEB_DIST):"
+if [ -d "$WEB_DIST" ]; then
+    echo "✓ Folder web_dist DITEMUKAN!"
+    ls -la "$WEB_DIST" 2>/dev/null || true
+else
+    echo "[!] Folder web_dist TIDAK DITEMUKAN."
+fi
 
-echo -e "\nCek isi tools/npm di hermes-agent:"
-ls -la "$HERMES_LIB/tools/npm/bin" 2>/dev/null || true
-head -n 5 "$HERMES_LIB/tools/npm/lib/node_modules/npm/bin/npm-cli.js" 2>/dev/null || true
+echo -e "\nCek sisa proses kompilasi / web yang masih aktif:"
+ps -ef 2>/dev/null | grep -E "node|web|tsc|vite|esbuild|hermes" | grep -v grep || true
 
 # 9. Tes hermes dashboard DENGAN --skip-build (Mode Tanpa Kompilasi Ulang)
 echo -e "\n--- [9] Test Direct: Launching hermes dashboard WITH --skip-build (6s trial) ---"

@@ -233,8 +233,8 @@ fi
 # agar tidak memicu error Android linker64 (ELF executable too small)
 HERMES_LIB="$PREFIX/lib/hermes-agent"
 if [ -d "$HERMES_LIB" ] && command -v termux-fix-shebang >/dev/null 2>&1; then
-    echo -e "${BLUE}Menyelaraskan shebang internal Hermes tools (npm/node/scripts)...${NC}"
-    find "$HERMES_LIB" -type f \( -name "*.js" -o -name "*.mjs" -o -name "*.sh" -o -name "npm" -o -name "npx" \) -exec termux-fix-shebang {} + 2>/dev/null || true
+    echo -e "${BLUE}Menyelaraskan shebang binary tools Hermes...${NC}"
+    termux-fix-shebang "$HERMES_LIB/bin/"* "$HERMES_LIB/tools/npm/bin/"* 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------------------------

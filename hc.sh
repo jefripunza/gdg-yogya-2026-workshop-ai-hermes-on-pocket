@@ -8,7 +8,7 @@
 set -e
 
 # Versi Script
-HC_SH_VERSION="v2.3.0"
+HC_SH_VERSION="v2.4.0"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -107,6 +107,12 @@ echo -e "${GREEN}✓ File .env berhasil diperbarui.${NC}"
 
 echo -e "\n${BLUE}[3/3] Memperbarui status Hermes Gateway & Dashboard...${NC}"
 
+# Hentikan proses hermes lama terlebih dahulu agar tidak menumpuk di background
+pkill -f "hermes.*dashboard" 2>/dev/null || true
+pkill -f "socat.*9119" 2>/dev/null || true
+pkill -f "node.*scripts/build/web.mjs" 2>/dev/null || true
+sleep 1
+
 # Pastikan TMPDIR valid di Termux
 export TMPDIR="${PREFIX:-/data/data/com.termux/files/usr}/tmp"
 mkdir -p "$TMPDIR"
@@ -172,12 +178,11 @@ EOF
 export NODE_OPTIONS="--require $FIX_FILE"
 unset ESBUILD_BINARY_PATH 2>/dev/null || true
 
-# Perbaiki shebang script internal Hermes (khususnya npm-cli.js & node-deps.mjs)
-# agar tidak memicu error Android linker64 (ELF executable too small)
+# Perbaiki shebang script internal Hermes (hanya binary tools utama, jangan rekursif ke node_modules!)
 HERMES_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent"
 if [ -d "$HERMES_LIB" ] && command -v termux-fix-shebang >/dev/null 2>&1; then
-    echo -e "${BLUE}Menyelaraskan shebang internal Hermes tools (npm/node/scripts)...${NC}"
-    find "$HERMES_LIB" -type f \( -name "*.js" -o -name "*.mjs" -o -name "*.sh" -o -name "npm" -o -name "npx" \) -exec termux-fix-shebang {} + 2>/dev/null || true
+    echo -e "${BLUE}Menyelaraskan shebang binary tools Hermes...${NC}"
+    termux-fix-shebang "$HERMES_LIB/bin/"* "$HERMES_LIB/tools/npm/bin/"* 2>/dev/null || true
 fi
 
 # Patch node-deps.mjs: Menyelaraskan resolusi Node agar tidak merujuk ke linker64 di Android 15
