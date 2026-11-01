@@ -79,6 +79,7 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
     - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456
     ```
     Hal ini membuat dashboard mengekspos `0.0.0.0:9119` secara aman dengan Basic Auth (`admin` / `123456`).
+  - **Service Daemon vs Interactive CLI**: Image resmi secara default menyalakan sesi interactive chat jika dijalankan tanpa argumen. Saat berjalan di background Docker Compose tanpa TTY, proses chat langsung keluar (`Warning: Input is not a terminal`). Wajib memberikan argumen `command: gateway run` agar container berjalan sebagai gateway daemon permanen di bawah supervisi `s6-overlay`.
 
 ### 7. Dependensi Platform Telegram (`python-telegram-bot` & `libheif`)
 - Hermes Agent membutuhkan `python-telegram-bot[webhooks]==22.8` agar adapter Telegram dapat berjalan.

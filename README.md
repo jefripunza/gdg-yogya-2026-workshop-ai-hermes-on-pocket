@@ -183,6 +183,7 @@ services:
     image: nousresearch/hermes-agent:latest
     container_name: hermes-agent
     restart: unless-stopped
+    command: gateway run
     ports:
       - "9119:9119"
       - "8642:8642"

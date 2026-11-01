@@ -83,7 +83,7 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
 - [x] **Perbaikan Hermes Dashboard Docker Compose (`ERR_CONNECTION_RESET`)**:
   - Menyelesaikan issue connection reset pada `localhost:9119` akibat kebijakan keamanan Hermes yang membatasi dashboard ke loopback `127.0.0.1` jika tidak ada basic auth.
   - Menyuntikkan environment `HERMES_DASHBOARD=1`, `HERMES_DASHBOARD_HOST=0.0.0.0`, `HERMES_DASHBOARD_PORT=9119`, `HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin`, dan `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456` pada `docker-compose.yml`.
-  - Menghapus override `command:` agar s6-overlay resmi memegang kendali service dashboard & gateway secara harmonis.
+  - Menambahkan argumen `command: gateway run` agar container berjalan sebagai gateway daemon permanen di bawah supervisi s6-overlay tanpa shutdown otomatis akibat ketiadaan terminal TTY.
   - Memperbarui dokumentasi di `README.md` dan `AGENT.md`.
 
 ---
