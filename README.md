@@ -2,6 +2,11 @@
 
 Selamat datang di workshop **AI Hermes on Pocket**! Di sini, Anda akan belajar cara membangun asisten AI mandiri (**Hermes Agent**) yang berjalan langsung di dalam saku (smartphone Android) Anda menggunakan **Termux**, ditenagai oleh **Google Gemini API** melalui **9Router**, dan dapat diajak berinteraksi kapan saja melalui **Telegram** lengkap dengan fitur **Topics (Forum)**.
 
+## 👨‍💻 Pemateri (Speaker)
+- **Jefri Herdi Triyanto, S.T., C.Me** — *CEO PT. Sawang Teknologi Indonesia & Principal Software Engineer*
+- 🔗 **LinkedIn**: [linkedin.com/in/jefri-herdi-triyanto](https://id.linkedin.com/in/jefri-herdi-triyanto)
+- 📸 **Instagram**: [@jefripunza](https://instagram.com/jefripunza)
+
 ---
 
 ## 🎯 Gambaran Cara Kerja Sistem
@@ -122,11 +127,11 @@ Agar asisten AI Anda semakin rapi dan terorganisir:
    > - Secara bawaan Telegram, bot hanya bisa membaca pesan di grup jika dijadikan **Admin**, atau jika Anda memanggilnya dengan **mention** (`@nama_bot pesan`), atau jika Anda me-reply pesan bot.
    > - Agar bot bisa merespons semua pesan di grup tanpa perlu dijadikan Admin atau di-mention: buka `@BotFather` -> ketik `/setprivacy` -> pilih bot Anda -> pilih **`Disable`**.
 3. Buka **Info Grup** -> pilih **Edit (ikon pensil)** -> aktifkan menu **Topics** (Forum).
-4. Buat topik-topik produktif sesuai kebutuhan Anda, contohnya:
-   - **`#General`** : Diskusi santai, tanya jawab umum, dan ide cepat.
-   - **`#Coding-Helper`** : Konsultasi arsitektur kode, debugging, dan pembuatan fungsi.
-   - **`#Research`** : Ringkasan materi, analisis paper, dan eksplorasi konsep.
+4. Buat 4 topik produktif sesuai kebutuhan Anda:
+   - **`#Learning`** : Eksplorasi materi baru, rangkuman kursus, dan tanya jawab konsep mendalam.
+   - **`#Research`** : Ringkasan materi, analisis paper, dan eksplorasi riset.
    - **`#Daily-Planner`** : Perencanaan jadwal harian, to-do list, dan refleksi tugas.
+   - **`#Coding`** : Konsultasi arsitektur kode, debugging, dan pembuatan fungsi.
 
 Kini Anda dapat berdiskusi di setiap topik secara terpisah, dan Hermes akan menjawab sesuai konteks topik tersebut!
 

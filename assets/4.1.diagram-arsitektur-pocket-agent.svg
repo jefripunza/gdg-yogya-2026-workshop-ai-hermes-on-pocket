@@ -18,7 +18,7 @@
   <text x="150" y="155" text-anchor="middle" fill="#FFFFFF" font-family="Arial" font-size="16" font-weight="bold">STEP 01</text>
   <text x="95" y="205" fill="#FFFFFF" font-family="Arial" font-size="30" font-weight="bold">📱 Telegram Topics</text>
   <text x="95" y="242" fill="#B8D8C8" font-family="Arial" font-size="20">Chat &amp; Forum Grup (@BotFather)</text>
-  <text x="95" y="272" fill="#58E16B" font-family="Arial" font-size="18">Topik: #Home • #Coding • #Research</text>
+  <text x="95" y="272" fill="#58E16B" font-family="Arial" font-size="16">#Learning • #Research • #Daily-Planner • #Coding</text>
 
   <!-- Arrow 1 -> 2 -->
   <path d="M 520 205 L 670 205" stroke="#58E16B" stroke-width="5" stroke-dasharray="10,6"/>

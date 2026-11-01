@@ -108,6 +108,13 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Menyisipkan **Slide 9 Baru (Step 01 — Scan QR & Copy Perintah)** di antara Slide 8 dan Slide 9 lama yang menggabungkan QR Code repositori dengan blok perintah instalasi lengkap (sehingga Slide 18 lama dipindahkan ke Slide 9).
   - Menjadikan **Slide 10 (sebelumnya Slide 9)** murni berisi 4 langkah tutorial setup **9Router** (`01` Login `:20128`, `02` Set Provider Gemini, `03` Buat Combo `gdg-yogya`, `04` Generate API Key `9r-...`).
   - Memperbaiki kotak judul pada Slide Visual (`Template Slide 6` clones & `Template Slide 10`) agar tidak ada lagi judul yang terpotong (*clipped*) atau menabrak logo DevFest, serta memperbarui penomoran nama file aset gambar (`12.1`–`18.3`).
+- [x] **Penambahan Ikon Tech Stack Slide 1, Animasi Seluruh Slide, Perbaikan Tabrakan Teks, & Update Topik (`#Learning`, `#Research`, `#Daily-Planner`, `#Coding`)**:
+  - Membuat aset [`assets/1.1.tech-stack-icons.png`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/1.1.tech-stack-icons.png) dan menyematkan 6 ikon teknologi (**Hermes**, **Android**, **Termux**, **9Router**, **Gemini AI**, **Telegram**) tepat di bawah nama pemateri pada **Slide 1**.
+  - Menambahkan transisi *Fade* (`<p:transition>`) dan animasi masuk bertahap (*staggered automatic Fade entrance* `<p:timing>`) di seluruh **19 slide** pada `assets/DevFest Jogjakarta 2026 - Workshop AI.pptx`.
+  - Mengubah pilar ke-3 pada **Slide 5** menjadi **`9Router with Gemini`** (bersama `Hermes Agent` dan `Telegram Bot & Topics`).
+  - Memperbaiki lebar kotak judul dan posisi vertikal pada **Slide 8, 9, 10, 11, dan 17** agar judul 1 baris tidak lagi terlipat (*wrapping*) dan bertabrakan dengan subjudul/deskripsi di bawahnya.
+  - Memperbarui daftar 4 topik Telegram Forum di **Slide 4, 5, 14, 15, 18**, `README.md`, dan `PROMPT_PPT.md` menjadi **`#Learning`**, **`#Research`**, **`#Daily-Planner`**, dan **`#Coding`**.
+  - Menambahkan profil pemateri beserta tautan **LinkedIn** (`https://id.linkedin.com/in/jefri-herdi-triyanto`) dan **Instagram** (`@jefripunza`) ke dalam `README.md`.
 
 ---
 
