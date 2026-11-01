@@ -20,7 +20,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.2.0"
+MOBILE_SH_VERSION="v2.3.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -227,6 +227,14 @@ if [ -d "$HERMES_VENV" ]; then
         VIRTUAL_ENV="$HERMES_VENV" uv pip install "python-telegram-bot[webhooks]==22.8" >/dev/null 2>&1 || true
     fi
     echo -e "${GREEN}✓ Modul Telegram siap digunakan.${NC}"
+fi
+
+# Perbaiki shebang script internal Hermes (tools npm, node, scripts mjs)
+# agar tidak memicu error Android linker64 (ELF executable too small)
+HERMES_LIB="$PREFIX/lib/hermes-agent"
+if [ -d "$HERMES_LIB" ] && command -v termux-fix-shebang >/dev/null 2>&1; then
+    echo -e "${BLUE}Menyelaraskan shebang internal Hermes tools (npm/node/scripts)...${NC}"
+    find "$HERMES_LIB" -type f \( -name "*.js" -o -name "*.mjs" -o -name "*.sh" -o -name "npm" -o -name "npx" \) -exec termux-fix-shebang {} + 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------------------------

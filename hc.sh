@@ -7,6 +7,9 @@
 
 set -e
 
+# Versi Script
+HC_SH_VERSION="v2.0.0"
+
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
@@ -14,7 +17,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${BLUE}================================================================${NC}"
-echo -e "${GREEN}       Hermes Config Updater - 9Router Integration              ${NC}"
+echo -e "${GREEN}   Hermes Config Updater - 9Router Integration (${HC_SH_VERSION})    ${NC}"
 echo -e "${BLUE}================================================================${NC}"
 
 COMBO_NAME="$1"
@@ -104,6 +107,18 @@ echo -e "${GREEN}✓ File .env berhasil diperbarui.${NC}"
 
 echo -e "\n${BLUE}[3/3] Memperbarui status Hermes Gateway & Dashboard...${NC}"
 
+# Pastikan TMPDIR valid di Termux
+export TMPDIR="${PREFIX:-/data/data/com.termux/files/usr}/tmp"
+mkdir -p "$TMPDIR"
+
+# Perbaiki shebang script internal Hermes (khususnya npm-cli.js & node-deps.mjs)
+# agar tidak memicu error Android linker64 (ELF executable too small)
+HERMES_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent"
+if [ -d "$HERMES_LIB" ] && command -v termux-fix-shebang >/dev/null 2>&1; then
+    echo -e "${BLUE}Menyelaraskan shebang internal Hermes tools (npm/node/scripts)...${NC}"
+    find "$HERMES_LIB" -type f \( -name "*.js" -o -name "*.mjs" -o -name "*.sh" -o -name "npm" -o -name "npx" \) -exec termux-fix-shebang {} + 2>/dev/null || true
+fi
+
 # Restart atau jalankan Hermes Gateway
 if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
     echo -e "${YELLOW}Merestart Hermes Gateway...${NC}"
@@ -120,24 +135,42 @@ sleep 1
 
 if command -v socat >/dev/null 2>&1; then
     nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
-    sleep 2
-    nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
+    echo -n "Menunggu Hermes Web UI siap di port :9118"
+    DASHBOARD_READY=false
+    for i in $(seq 1 40); do
+        if ! pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
+            echo -e "\n${RED}[!] Hermes Dashboard berhenti.${NC}"
+            break
+        fi
+        if netstat -tlpn 2>/dev/null | grep -q "9118" || curl -sI "http://127.0.0.1:9118" 2>/dev/null | grep -q "HTTP"; then
+            DASHBOARD_READY=true
+            echo -e " ${GREEN}[SIAP!]${NC}"
+            break
+        fi
+        echo -n "."
+        sleep 1
+    done
+
+    if [ "$DASHBOARD_READY" = true ]; then
+        nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
+        sleep 1
+    else
+        echo -e "\n${YELLOW}Log Terakhir Hermes Dashboard (~/.hermes/logs/dashboard.log):${NC}"
+        tail -n 20 "$HERMES_DIR/logs/dashboard.log" 2>/dev/null || true
+    fi
 else
     # Jika tidak ada socat (misal Docker container biasa), bind langsung ke 0.0.0.0:9119
     nohup hermes dashboard --host 0.0.0.0 --port 9119 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    sleep 2
 fi
-sleep 2
 
 PID_GW=$(pgrep -f "hermes.*gateway" | head -n 1 || true)
 PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)
 
-if [ -n "$PID_HD" ]; then
-    echo -e "${GREEN}✓ Hermes Web Dashboard aktif (PID: ${PID_HD}) -> http://localhost:9119${NC}"
+if pgrep -f "socat.*9119" >/dev/null 2>&1 || ( [ -n "$PID_HD" ] && ! command -v socat >/dev/null 2>&1 ); then
+    echo -e "${GREEN}✓ Hermes Web Dashboard aktif -> http://localhost:9119${NC}"
 else
-    echo -e "${YELLOW}[PERINGATAN] Hermes Dashboard belum berjalan. Memeriksa log...${NC}"
-    if [ -f "$HERMES_DIR/logs/dashboard.log" ]; then
-        tail -n 15 "$HERMES_DIR/logs/dashboard.log"
-    fi
+    echo -e "${YELLOW}[INFO] Jika dashboard masih dalam proses build, tunggu sebentar lalu refresh http://localhost:9119${NC}"
 fi
 
 echo -e "\n${BLUE}================================================================${NC}"

@@ -3,12 +3,14 @@
 # diagnose.sh - Diagnostic & Troubleshooting Script untuk Real Device (Termux)
 # ==============================================================================
 
+DIAGNOSE_SH_VERSION="v1.0.0"
+
 REPORT_FILE="$HOME/diag_report.txt"
 exec > >(tee "$REPORT_FILE") 2>&1
 
 echo "================================================================"
-echo "          DIAGNOSTIC REPORT - HERMES POCKET LAB                 "
-echo "          Waktu: $(date)                                        "
+echo "    DIAGNOSTIC REPORT - HERMES POCKET LAB (${DIAGNOSE_SH_VERSION})     "
+echo "    Waktu: $(date)                                              "
 echo "================================================================"
 
 # 1. Environment & Path
@@ -76,10 +78,15 @@ fi
 
 # 8. Tes Jalankan Hermes Dashboard Foreground (5 Detik)
 echo -e "\n--- [8] Test Direct: Launching hermes dashboard (5s trial) ---"
+TMPDIR="${TMPDIR:-$PREFIX/tmp}"
+mkdir -p "$TMPDIR"
+TEST_LOG="$TMPDIR/test_dashboard.log"
+TEST_LOG2="$TMPDIR/test_9119.log"
+
 if command -v hermes >/dev/null 2>&1; then
     echo "Mencoba start: hermes dashboard --host 127.0.0.1 --port 9118 --no-open ..."
     # Jalankan di background sementara selama 5 detik untuk menangkap outputnya
-    hermes dashboard --host 127.0.0.1 --port 9118 --no-open > /tmp/test_dashboard.log 2>&1 &
+    hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$TEST_LOG" 2>&1 &
     TEST_PID=$!
     sleep 3
     if kill -0 $TEST_PID 2>/dev/null; then
@@ -89,15 +96,15 @@ if command -v hermes >/dev/null 2>&1; then
         kill -9 $TEST_PID 2>/dev/null || true
     else
         echo "[!] hermes dashboard MATI SEKETIKA setelah dijalankan!"
-        echo "Isi error output /tmp/test_dashboard.log:"
-        cat /tmp/test_dashboard.log
+        echo "Isi error output $TEST_LOG:"
+        cat "$TEST_LOG"
     fi
 fi
 
 # 9. Tes Alternatif: hermes dashboard langsung di port 9119
 echo -e "\n--- [9] Test Direct: Launching on port 9119 directly (3s trial) ---"
 if command -v hermes >/dev/null 2>&1; then
-    hermes dashboard --host 127.0.0.1 --port 9119 --no-open > /tmp/test_9119.log 2>&1 &
+    hermes dashboard --host 127.0.0.1 --port 9119 --no-open > "$TEST_LOG2" 2>&1 &
     TEST_PID2=$!
     sleep 2
     if kill -0 $TEST_PID2 2>/dev/null; then
@@ -107,7 +114,7 @@ if command -v hermes >/dev/null 2>&1; then
         kill -9 $TEST_PID2 2>/dev/null || true
     else
         echo "[!] hermes dashboard di port 9119 mati. Error output:"
-        cat /tmp/test_9119.log
+        cat "$TEST_LOG2"
     fi
 fi
 
