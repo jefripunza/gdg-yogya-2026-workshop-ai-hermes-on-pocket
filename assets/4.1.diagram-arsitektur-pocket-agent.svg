@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1315"/>
+      <stop offset="100%" stop-color="#0F1F1C"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#55C182"/>
+      <stop offset="100%" stop-color="#36AC6D"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" rx="28" fill="url(#bgGrad)" stroke="#55C182" stroke-width="3"/>
+  <text x="600" y="62" text-anchor="middle" fill="#55C182" font-family="Google Sans, Arial, sans-serif" font-size="24" font-weight="bold" letter-spacing="2">ARSITEKTUR POCKET AGENT (100% LOCAL GATEWAY)</text>
+
+  <!-- Node 1: Telegram -->
+  <rect x="70" y="110" width="440" height="190" rx="20" fill="#112226" stroke="#55C182" stroke-width="3"/>
+  <rect x="95" y="132" width="110" height="34" rx="17" fill="#36AC6D"/>
+  <text x="150" y="155" text-anchor="middle" fill="#FFFFFF" font-family="Arial" font-size="16" font-weight="bold">STEP 01</text>
+  <text x="95" y="205" fill="#FFFFFF" font-family="Arial" font-size="30" font-weight="bold">📱 Telegram Topics</text>
+  <text x="95" y="242" fill="#B8D8C8" font-family="Arial" font-size="20">Chat &amp; Forum Grup (@BotFather)</text>
+  <text x="95" y="272" fill="#58E16B" font-family="Arial" font-size="18">Topik: #Home • #Coding • #Research</text>
+
+  <!-- Arrow 1 -> 2 -->
+  <path d="M 520 205 L 670 205" stroke="#58E16B" stroke-width="5" stroke-dasharray="10,6"/>
+  <polygon points="675,205 655,193 655,217" fill="#58E16B"/>
+  <text x="595" y="185" text-anchor="middle" fill="#58E16B" font-family="Arial" font-size="17" font-weight="bold">Bot API Polling</text>
+
+  <!-- Node 2: Hermes Agent -->
+  <rect x="690" y="110" width="440" height="190" rx="20" fill="#112226" stroke="#55C182" stroke-width="3"/>
+  <rect x="715" y="132" width="150" height="34" rx="17" fill="#36AC6D"/>
+  <text x="790" y="155" text-anchor="middle" fill="#FFFFFF" font-family="Arial" font-size="16" font-weight="bold">PORT :9119</text>
+  <text x="715" y="205" fill="#FFFFFF" font-family="Arial" font-size="30" font-weight="bold">⚡ Hermes Agent</text>
+  <text x="715" y="242" fill="#B8D8C8" font-family="Arial" font-size="20">Autonomous AI (Nous Research)</text>
+  <text x="715" y="272" fill="#58E16B" font-family="Arial" font-size="18">50+ Skills • Memory • Cron • Web UI</text>
+
+  <!-- Arrow 2 -> 3 -->
+  <path d="M 910 310 L 910 415" stroke="#58E16B" stroke-width="5"/>
+  <polygon points="910,420 898,400 922,400" fill="#58E16B"/>
+  <text x="995" y="372" text-anchor="middle" fill="#58E16B" font-family="Arial" font-size="17" font-weight="bold">OpenAI Proxy (/v1)</text>
+
+  <!-- Node 3: 9Router -->
+  <rect x="690" y="430" width="440" height="190" rx="20" fill="#112226" stroke="#55C182" stroke-width="3"/>
+  <rect x="715" y="452" width="160" height="34" rx="17" fill="#36AC6D"/>
+  <text x="795" y="475" text-anchor="middle" fill="#FFFFFF" font-family="Arial" font-size="16" font-weight="bold">PORT :20128</text>
+  <text x="715" y="525" fill="#FFFFFF" font-family="Arial" font-size="30" font-weight="bold">🔄 9Router Proxy</text>
+  <text x="715" y="562" fill="#B8D8C8" font-family="Arial" font-size="20">Local Multi-Model LLM Router</text>
+  <text x="715" y="592" fill="#58E16B" font-family="Arial" font-size="18">Combo: "gdg-yogya" (Key: 9r-...)</text>
+
+  <!-- Arrow 3 -> 4 -->
+  <path d="M 680 525 L 530 525" stroke="#58E16B" stroke-width="5"/>
+  <polygon points="525,525 545,513 545,537" fill="#58E16B"/>
+  <text x="605" y="505" text-anchor="middle" fill="#58E16B" font-family="Arial" font-size="17" font-weight="bold">HTTPS API Call</text>
+
+  <!-- Node 4: Google Gemini -->
+  <rect x="70" y="430" width="440" height="190" rx="20" fill="#142C24" stroke="#58E16B" stroke-width="3"/>
+  <rect x="95" y="452" width="170" height="34" rx="17" fill="#55C182"/>
+  <text x="180" y="475" text-anchor="middle" fill="#080C0D" font-family="Arial" font-size="16" font-weight="bold">GOOGLE AI STUDIO</text>
+  <text x="95" y="525" fill="#FFFFFF" font-family="Arial" font-size="30" font-weight="bold">✨ Google Gemini API</text>
+  <text x="95" y="562" fill="#B8D8C8" font-family="Arial" font-size="20">Otak Penalaran LLM Cerdas</text>
+  <text x="95" y="592" fill="#58E16B" font-family="Arial" font-size="18">Gemini 2.0 Flash / 1.5 Pro (Free Tier)</text>
+
+  <!-- Return Arrow 4 -> 1 -->
+  <path d="M 290 420 L 290 315" stroke="#55C182" stroke-width="5" stroke-dasharray="10,6"/>
+  <polygon points="290,310 278,330 302,330" fill="#55C182"/>
+  <text x="200" y="372" text-anchor="middle" fill="#55C182" font-family="Arial" font-size="17" font-weight="bold">Jawaban Balik AI</text>
+
+  <text x="600" y="675" text-anchor="middle" fill="#FFFFFF" font-family="Arial" font-size="20"> Berjalan di Termux (HP Android) atau Docker Compose (Laptop Windows / macOS / Linux)</text>
+</svg>

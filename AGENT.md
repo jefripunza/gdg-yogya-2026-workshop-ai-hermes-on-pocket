@@ -34,7 +34,7 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 | `PROMPT_PPT.md` | **Presentasi / Slide** | Blueprint pemetaan layout template PPTX DevFest 2026 & draft materi 19 slide workshop. |
 | `assets/template.pptx` | **Master Style PPTX** | Salinan murni template asli (12 layout archetype) sebagai acuan permanen pemetaan style oleh AI. |
 | `assets/DevFest Jogjakarta 2026 - Workshop AI.pptx` | **Output Slide PPTX** | File presentasi utama workshop yang di-generate/diperbarui berdasarkan `PROMPT_PPT.md` & `template.pptx`. |
-| `assets/<slide>.<urut>.<judul>.png` | **Aset Visual Slide** | 20 aset gambar (foto profil pemateri `2.1` & 19 screenshot tutorial) sesuai nomor slide & urutan. |
+| `assets/<slide>.<urut>.<judul>.png` | **Aset Visual Slide** | 23 aset gambar (`2.1` foto profil, `4.1` diagram arsitektur `.svg`/`.png`, `7.1`, `9.1` QR code GitHub berlogo GDG, `9.2` logo GDG transparan, & `12.1`–`18.3` screenshot tutorial) sesuai nomor slide & urutan. |
 | `TODO.md` | **Kontributor / Agent** | Catatan task yang sudah selesai dan daftar rencana backlog. |
 | `CONTRIBUTING.md` | **Kontributor** | Panduan kontribusi open-source, standar script, dan tata cara testing. |
 

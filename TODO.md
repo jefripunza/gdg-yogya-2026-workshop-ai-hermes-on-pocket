@@ -99,7 +99,15 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Mengintegrasikan seluruh slide visual (Bagian 4 lama) langsung ke dalam urutan utama **19 Slide** di `PROMPT_PPT.md` sehingga 100% gambar masuk ke dalam slide yang relevan.
 - [x] **Eksekusi Generasi File Presentasi (`assets/DevFest Jogjakarta 2026 - Workshop AI.pptx`)**:
   - Menyontek struktur XML 12 layout dari `assets/template.pptx` (tanpa mengubah `template.pptx` sedikit pun) dan menyusun **19 Slide lengkap** beserta Speaker Notes ke dalam `assets/DevFest Jogjakarta 2026 - Workshop AI.pptx`.
-  - Menyematkan seluruh 20 aset gambar `.png` (`2.1`, `7.1`, `11.1`–`11.3`, `12.1`–`12.3`, `13.1`–`13.3`, `15.1`–`15.3`, `16.1`–`16.3`, `17.1`–`17.3`) dengan rasio aspek proporsional (anti-gepeng/distorsi) dan bingkai bertema gelap `#0D1719` + aksen hijau `#55C182`.
+  - Menyematkan seluruh aset gambar `.png` dengan rasio aspek proporsional (anti-gepeng/distorsi) dan bingkai bertema gelap `#0D1719` + aksen hijau `#55C182`.
+- [x] **Revisi Layout, Ukuran Teks, Diagram SVG Arsitektur, & Slide Scan QR Repository (`PROMPT_PPT.md` & `DevFest Jogjakarta 2026 - Workshop AI.pptx`)**:
+  - Menghapus `<a:normAutofit>` / `<a:spAutoFit>` dan *fixed line-spacing* bawaan template yang menyebabkan teks mengecil atau berjarak renggang, serta menerapkan `<a:noAutofit/>` dan proporsi *line-spacing* `115%` di seluruh 19 slide agar ukuran teks besar dan mudah terbaca.
+  - Menghapus penyebutan `"Wajadi AI"` pada Slide 2 (Speaker Profile) dan merapikan posisi kartu `ENG` serta `R&D`.
+  - Menghilangkan duplikasi teks 4-langkah pada Slide 4 dan membuat diagram arsitektur visual vektor & resolusi tinggi (`assets/4.1.diagram-arsitektur-pocket-agent.svg` & `assets/4.1.diagram-arsitektur-pocket-agent.png`).
+  - Menghapus background putih pada `assets/logo_gdg.png` menjadi 100% transparan & *tight-cropped* (`assets/9.2.logo-gdg-transparent.png`), lalu membuat QR Code resmi menuju `https://github.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket` dengan logo GDG di tengah (`assets/9.1.qr-github-repo-gdg.png`, terverifikasi `cv2.QRCodeDetector`).
+  - Menyisipkan **Slide 9 Baru (Step 01 — Scan QR & Copy Perintah)** di antara Slide 8 dan Slide 9 lama yang menggabungkan QR Code repositori dengan blok perintah instalasi lengkap (sehingga Slide 18 lama dipindahkan ke Slide 9).
+  - Menjadikan **Slide 10 (sebelumnya Slide 9)** murni berisi 4 langkah tutorial setup **9Router** (`01` Login `:20128`, `02` Set Provider Gemini, `03` Buat Combo `gdg-yogya`, `04` Generate API Key `9r-...`).
+  - Memperbaiki kotak judul pada Slide Visual (`Template Slide 6` clones & `Template Slide 10`) agar tidak ada lagi judul yang terpotong (*clipped*) atau menabrak logo DevFest, serta memperbarui penomoran nama file aset gambar (`12.1`–`18.3`).
 
 ---
 
