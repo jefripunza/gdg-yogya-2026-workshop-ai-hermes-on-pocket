@@ -20,7 +20,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.3.0"
+MOBILE_SH_VERSION="v2.4.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -255,6 +255,34 @@ if command -v termux-fix-shebang >/dev/null 2>&1; then
 fi
 echo -e "${GREEN}✓ 9Router berhasil diinstal!${NC}"
 
+# Patch node-deps.mjs: Menyelaraskan resolusi Node agar tidak merujuk ke linker64 di Android 15
+NODE_DEPS="$HERMES_LIB/app/scripts/build/node-deps.mjs"
+if [ -f "$NODE_DEPS" ] && command -v node >/dev/null 2>&1; then
+    node -e "
+    const fs = require('fs');
+    const file = process.argv[1];
+    if (fs.existsSync(file)) {
+      let content = fs.readFileSync(file, 'utf8');
+      if (content.includes('return [process.execPath, cli]')) {
+        const replacement = 'const nodeExec = (process.execPath && !process.execPath.includes(\"linker\")) ? process.execPath : (process.env.PREFIX ? process.env.PREFIX + \"/bin/node\" : \"/data/data/com.termux/files/usr/bin/node\"); return [nodeExec, cli]';
+        content = content.replace('return [process.execPath, cli]', replacement);
+        fs.writeFileSync(file, content);
+        console.log('✓ node-deps.mjs berhasil diselaraskan dengan Android Bionic Node');
+      }
+    }
+    " "$NODE_DEPS" 2>/dev/null || true
+fi
+
+# Pre-build Web UI Hermes jika hermes_cli/web_dist belum ada
+WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
+if [ ! -d "$WEB_DIST" ] && [ -d "$HERMES_LIB/app" ] && command -v npm >/dev/null 2>&1; then
+    echo -e "${BLUE}Membangun Web UI Hermes ke ${WEB_DIST} (pertama kali, ~1 menit)...${NC}"
+    (cd "$HERMES_LIB/app" && npm install --workspace web && npm run build -w web) > "$HERMES_DIR/logs/web_build.log" 2>&1 || true
+    if [ -d "$WEB_DIST" ]; then
+        echo -e "${GREEN}✓ Web UI Hermes berhasil dibangun!${NC}"
+    fi
+fi
+
 # Inisialisasi kredensial dasar Hermes
 HERMES_DIR="${HERMES_HOME:-$HOME/.hermes}"
 mkdir -p "$HERMES_DIR" "$HERMES_DIR/logs"
@@ -349,8 +377,12 @@ if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
     echo "[✓] Hermes Web Dashboard sudah berjalan (PID: $PID_HD) -> http://localhost:9119"
 elif command -v hermes >/dev/null 2>&1; then
     echo "[+] Menjalankan Hermes Web Dashboard di background..."
-    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
-    sleep 2
+    DASHBOARD_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
+    if [ -d "$PREFIX/lib/hermes-agent/app/hermes_cli/web_dist" ]; then
+        DASHBOARD_FLAGS="$DASHBOARD_FLAGS --skip-build"
+    fi
+    nohup hermes dashboard $DASHBOARD_FLAGS > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
+    sleep 3
     PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)
     if [ -n "$PID_HD" ]; then
         echo "[✓] Hermes Web Dashboard berhasil aktif (PID: $PID_HD) -> http://localhost:9119"

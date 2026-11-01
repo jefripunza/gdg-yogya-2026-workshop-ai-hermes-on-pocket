@@ -8,7 +8,7 @@
 set -e
 
 # Versi Script
-HC_SH_VERSION="v2.0.0"
+HC_SH_VERSION="v2.1.0"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -119,6 +119,36 @@ if [ -d "$HERMES_LIB" ] && command -v termux-fix-shebang >/dev/null 2>&1; then
     find "$HERMES_LIB" -type f \( -name "*.js" -o -name "*.mjs" -o -name "*.sh" -o -name "npm" -o -name "npx" \) -exec termux-fix-shebang {} + 2>/dev/null || true
 fi
 
+# Patch node-deps.mjs: Menyelaraskan resolusi Node agar tidak merujuk ke linker64 di Android 15
+NODE_DEPS="$HERMES_LIB/app/scripts/build/node-deps.mjs"
+if [ -f "$NODE_DEPS" ] && command -v node >/dev/null 2>&1; then
+    node -e "
+    const fs = require('fs');
+    const file = process.argv[1];
+    if (fs.existsSync(file)) {
+      let content = fs.readFileSync(file, 'utf8');
+      if (content.includes('return [process.execPath, cli]')) {
+        const replacement = 'const nodeExec = (process.execPath && !process.execPath.includes(\"linker\")) ? process.execPath : (process.env.PREFIX ? process.env.PREFIX + \"/bin/node\" : \"/data/data/com.termux/files/usr/bin/node\"); return [nodeExec, cli]';
+        content = content.replace('return [process.execPath, cli]', replacement);
+        fs.writeFileSync(file, content);
+        console.log('✓ node-deps.mjs berhasil diselaraskan dengan Android Bionic Node');
+      }
+    }
+    " "$NODE_DEPS" 2>/dev/null || true
+fi
+
+# Pre-build Web UI Hermes jika hermes_cli/web_dist belum ada
+WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
+if [ ! -d "$WEB_DIST" ] && [ -d "$HERMES_LIB/app" ] && command -v npm >/dev/null 2>&1; then
+    echo -e "${BLUE}Membangun Web UI Hermes ke ${WEB_DIST} (pertama kali, ~1 menit)...${NC}"
+    (cd "$HERMES_LIB/app" && npm install --workspace web && npm run build -w web) > "$HERMES_DIR/logs/web_build.log" 2>&1 || true
+    if [ -d "$WEB_DIST" ]; then
+        echo -e "${GREEN}✓ Web UI Hermes berhasil dibangun!${NC}"
+    else
+        echo -e "${YELLOW}[!] Build web_dist via npm sedang berjalan atau cek: ~/.hermes/logs/web_build.log${NC}"
+    fi
+fi
+
 # Restart atau jalankan Hermes Gateway
 if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
     echo -e "${YELLOW}Merestart Hermes Gateway...${NC}"
@@ -127,6 +157,12 @@ if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
 fi
 nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 
+# Tentukan flags hermes dashboard: gunakan --skip-build jika web_dist sudah tersedia
+DASHBOARD_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
+if [ -d "$WEB_DIST" ]; then
+    DASHBOARD_FLAGS="$DASHBOARD_FLAGS --skip-build"
+fi
+
 # Restart atau jalankan Hermes Dashboard & Relay
 echo -e "${YELLOW}Merestart Hermes Dashboard & Relay...${NC}"
 pkill -f "hermes.*dashboard" || true
@@ -134,17 +170,17 @@ pkill -f "socat.*9119" || true
 sleep 1
 
 if command -v socat >/dev/null 2>&1; then
-    nohup hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    nohup hermes dashboard $DASHBOARD_FLAGS > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
     echo -n "Menunggu Hermes Web UI siap di port :9118"
     DASHBOARD_READY=false
-    for i in $(seq 1 40); do
-        if ! pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
-            echo -e "\n${RED}[!] Hermes Dashboard berhenti.${NC}"
-            break
-        fi
+    for i in $(seq 1 30); do
         if netstat -tlpn 2>/dev/null | grep -q "9118" || curl -sI "http://127.0.0.1:9118" 2>/dev/null | grep -q "HTTP"; then
             DASHBOARD_READY=true
             echo -e " ${GREEN}[SIAP!]${NC}"
+            break
+        fi
+        if ! pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
+            echo -e "\n${RED}[!] Hermes Dashboard berhenti.${NC}"
             break
         fi
         echo -n "."
@@ -160,7 +196,11 @@ if command -v socat >/dev/null 2>&1; then
     fi
 else
     # Jika tidak ada socat (misal Docker container biasa), bind langsung ke 0.0.0.0:9119
-    nohup hermes dashboard --host 0.0.0.0 --port 9119 --no-open > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
+    DASHBOARD_FLAGS_NO_SOCAT="--host 0.0.0.0 --port 9119 --no-open"
+    if [ -d "$WEB_DIST" ]; then
+        DASHBOARD_FLAGS_NO_SOCAT="$DASHBOARD_FLAGS_NO_SOCAT --skip-build"
+    fi
+    nohup hermes dashboard $DASHBOARD_FLAGS_NO_SOCAT > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
     sleep 2
 fi
 
