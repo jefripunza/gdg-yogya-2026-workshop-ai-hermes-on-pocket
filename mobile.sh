@@ -49,7 +49,15 @@ fi
 # 1. Konfigurasi Repo Cepat (Cloudflare Mirror) & Dependensi Dasar
 # ------------------------------------------------------------------------------
 echo -e "\n${BLUE}[1/6] Mengatur repositori Termux ke Cloudflare Mirror (packages-cf.termux.dev)...${NC}"
-mkdir -p "$PREFIX/etc/apt" "$PREFIX/etc/termux/mirrors/default"
+export DEBIAN_FRONTEND=noninteractive
+
+# Hapus file repo lama (seperti game.list / science.list / termux.net) selain hermes-agent.list
+mkdir -p "$PREFIX/etc/apt/sources.list.d" "$PREFIX/etc/apt/apt.conf.d"
+find "$PREFIX/etc/apt/sources.list.d" -type f ! -name "hermes-agent.list" -delete 2>/dev/null || true
+
+# Bersihkan seluruh mirror lama (termasuk termux.net) agar pkg tidak pernah fallback ke termux.net
+rm -rf "$PREFIX/etc/termux/mirrors" "$PREFIX/etc/termux/chosen_mirrors"
+mkdir -p "$PREFIX/etc/termux/mirrors/default"
 cat << 'EOF' > "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev"
 # This file is sourced by pkg
 WEIGHT=10
@@ -57,18 +65,46 @@ MAIN="https://packages-cf.termux.dev/apt/termux-main"
 ROOT="https://packages-cf.termux.dev/apt/termux-root"
 X11="https://packages-cf.termux.dev/apt/termux-x11"
 EOF
-rm -rf "$PREFIX/etc/termux/chosen_mirrors"
-ln -s "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev" "$PREFIX/etc/termux/chosen_mirrors"
-echo "deb https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
-if [ -d "$PREFIX/etc/apt/sources.list.d" ]; then
-    sed -i 's|https\?://[^/]*termux\.net[^ ]*|https://packages-cf.termux.dev/apt/termux-main|g' "$PREFIX/etc/apt/sources.list.d/"*.list 2>/dev/null || true
-fi
-echo -e "${GREEN}✓ Repo Termux diarahkan ke: https://packages-cf.termux.dev/apt/termux-main${NC}"
+ln -sf "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev" "$PREFIX/etc/termux/chosen_mirrors"
 
-echo -e "\n${BLUE}Memeriksa dan menginstal paket-paket dasar Termux...${NC}"
-export DEBIAN_FRONTEND=noninteractive
-pkg update -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
-pkg install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
+# Gunakan [trusted=yes] & AllowInsecureRepositories agar tidak gagal NO_PUBKEY 5A897D96E57CF20C pada Termux lama
+echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
+cat << 'EOF' > "$PREFIX/etc/apt/apt.conf.d/99-termux-cloudflare"
+Acquire::AllowInsecureRepositories "true";
+Acquire::AllowDowngradeToInsecureRepositories "true";
+APT::Get::AllowUnauthenticated "true";
+Dpkg::Options {
+   "--force-confdef";
+   "--force-confold";
+};
+EOF
+echo -e "${GREEN}✓ Repo Termux dikunci ke: https://packages-cf.termux.dev/apt/termux-main${NC}"
+
+echo -e "\n${BLUE}Memperbarui keyring (5A897D96E57CF20C) dan menginstal paket-paket dasar Termux...${NC}"
+# Gunakan apt-get secara langsung (bukan wrapper pkg) agar [trusted=yes] di sources.list tidak ditimpa
+apt-get update -y \
+    -o Acquire::AllowInsecureRepositories=true \
+    -o Acquire::AllowDowngradeToInsecureRepositories=true \
+    -o APT::Get::AllowUnauthenticated=true
+
+apt-get install -y --allow-unauthenticated \
+    -o Acquire::AllowInsecureRepositories=true \
+    -o APT::Get::AllowUnauthenticated=true \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    termux-keyring || true
+
+# Pastikan kembali sources.list tetap mengarah ke Cloudflare Mirror setelah termux-keyring diperbarui
+echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
+find "$PREFIX/etc/apt/sources.list.d" -type f ! -name "hermes-agent.list" -delete 2>/dev/null || true
+
+apt-get update -y \
+    -o Acquire::AllowInsecureRepositories=true \
+    -o APT::Get::AllowUnauthenticated=true
+
+apt-get install -y --allow-unauthenticated \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
     curl \
     wget \
     git \
@@ -87,7 +123,7 @@ pkg install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-
     gnupg \
     pkg-config \
     libheif \
-    && pkg clean
+    && apt-get clean
 
 # ------------------------------------------------------------------------------
 # 2. Instalasi Hermes Agent (Nous Research)
@@ -125,8 +161,8 @@ if [ "$DOWNLOADED" = true ]; then
       "deb [signed-by=$KEY_FILE] $REPO_URL $SUITE main" \
       > "$SOURCES_FILE"
     
-    if pkg update -y 2>/dev/null; then
-        if pkg install -y hermes-agent; then
+    if apt-get update -y -o Acquire::AllowInsecureRepositories=true -o APT::Get::AllowUnauthenticated=true 2>/dev/null; then
+        if apt-get install -y --allow-unauthenticated -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" hermes-agent; then
             APT_SUCCESS=true
             echo -e "${GREEN}✓ hermes-agent berhasil diinstal via APT (${CHANNEL})!${NC}"
         fi
@@ -157,7 +193,7 @@ fi
 # 3. Instalasi Node.js Terbaru & 9Router via npm
 # ------------------------------------------------------------------------------
 echo -e "\n${BLUE}[3/6] Menginstal Node.js versi terbaru & npm...${NC}"
-pkg install -y nodejs
+apt-get install -y --allow-unauthenticated -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" nodejs
 
 NODE_VER=$(node -v || true)
 NPM_VER=$(npm -v || true)
