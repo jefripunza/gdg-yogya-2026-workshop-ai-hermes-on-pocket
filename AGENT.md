@@ -33,8 +33,8 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 | `README.md` | **Publik / Peserta** | Panduan ramah pemula untuk peserta workshop (100% bebas dari istilah Docker RnD). |
 | `TITLE.md` | **Proposal / Event** | Generator & kurasi pilihan judul workshop untuk diajukan ke panitia GDG. |
 | `PROMPT_PPT.md` | **Presentasi / Slide** | Blueprint pemetaan layout template PPTX DevFest 2026 & draft materi 19 slide workshop. |
-| `assets/template.pptx` | **Master Style PPTX** | Salinan murni template asli (12 layout archetype) sebagai acuan permanen pemetaan style oleh AI. |
-| `assets/DevFest Jogjakarta 2026 - Workshop AI.pptx` | **Output Slide PPTX** | File presentasi utama workshop yang di-generate/diperbarui berdasarkan `PROMPT_PPT.md` & `template.pptx`. |
+| `assets/template.pptx` | **Master Style PPTX** | Salinan murni template asli (12 layout archetype) di folder `assets/` sebagai acuan permanen (Read-Only) pemetaan style oleh AI. |
+| `DevFest Jogjakarta 2026 - Workshop AI.pptx` | **Output Slide PPTX** | File presentasi utama workshop yang berlokasi di root project (dikeluarkan dari `assets/`), di-generate/diperbarui berdasarkan `PROMPT_PPT.md` & `template.pptx`. |
 | `assets/<slide>.<urut>.<judul>.png` | **Aset Visual Slide** | 24 aset gambar (`1.1` ikon tech stack, `2.1` foto profil, `4.1` diagram arsitektur `.svg`/`.png`, `7.1`, `9.1` QR code GitHub berlogo GDG, `9.2` logo GDG transparan, & `12.1`–`18.3` screenshot tutorial) sesuai nomor slide & urutan. |
 | `build/TODO.md` | **Kontributor / Agent** | Catatan task yang sudah selesai dan daftar rencana backlog. |
 | `CONTRIBUTING.md` | **Kontributor** | Panduan kontribusi open-source, standar script, dan tata cara testing. |
@@ -105,9 +105,9 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
   4. Atau Group Privacy di-disable via `@BotFather` (`/setprivacy` -> `Disable`).
 - Hermes Agent juga menerapkan aturan `require_mention` di grup agar tidak menyampah ke obrolan umum.
 
-### 9. Aturan Pemetaan & Generasi Slide Presentasi (`template.pptx` vs `DevFest Jogjakarta 2026 - Workshop AI.pptx`)
-- **DILARANG MENGEDIT `assets/template.pptx`**: File `assets/template.pptx` adalah **Master Style Reference (100% Read-Only)** yang menyimpan 12 archetype layout asli dari panitia DevFest Jogjakarta 2026 (`20.0" x 11.25"`, tema gelap `#080C0D`, aksen hijau `#55C182` / `#58E16B`). File ini tidak boleh diubah, diedit, atau ditimpa dalam kondisi apa pun.
-- **FILE TARGET YANG DIEDIT ADALAH `assets/DevFest Jogjakarta 2026 - Workshop AI.pptx`**: Saat AI diminta membuat atau memperbarui slide presentasi, AI wajib membaca/`clone` struktur slide dari `assets/template.pptx` (sebagai sumber acuan style), menyuntikkan konten teks serta gambar sesuai `PROMPT_PPT.md`, lalu menyimpan hasilnya ke `assets/DevFest Jogjakarta 2026 - Workshop AI.pptx`.
+### 9. Aturan Pemetaan & Generasi Slide Presentasi (`assets/template.pptx` vs `DevFest Jogjakarta 2026 - Workshop AI.pptx`)
+- **DILARANG MENGEDIT `assets/template.pptx`**: File `assets/template.pptx` adalah **Master Style Reference (100% Read-Only)** yang menyimpan 12 archetype layout asli dari panitia DevFest Jogjakarta 2026 (`20.0" x 11.25"`, tema gelap `#080C0D`, aksen hijau `#55C182` / `#58E16B`). File template ini tetap di dalam `assets/` dan tidak boleh diubah, diedit, atau ditimpa dalam kondisi apa pun.
+- **FILE TARGET YANG DIEDIT ADALAH `./DevFest Jogjakarta 2026 - Workshop AI.pptx` (Root Project)**: File presentasi utama telah dikeluarkan dari folder `assets/` ke root direktori. Saat AI diminta membuat atau memperbarui slide presentasi, AI wajib membaca/`clone` struktur slide dari `assets/template.pptx` (sebagai sumber acuan style, 100% Read-Only), menyuntikkan konten teks serta gambar sesuai `PROMPT_PPT.md`, lalu menyimpan hasilnya ke `./DevFest Jogjakarta 2026 - Workshop AI.pptx` di root.
 - Seluruh file gambar `.png` di dalam `assets/` wajib mengikuti konvensi penamaan `<nomor-slide>.<urutan>.<judul-gambar>.png` (contoh: `2.1.foto-profil-jefri-herdi-triyanto.png`, `7.1.persiapan-botfather-new-bot.png`, `11.1.botfather-buka-mini-app.png`) dan dipastikan 100% masuk ke dalam slide yang sesuai.
 
 ---

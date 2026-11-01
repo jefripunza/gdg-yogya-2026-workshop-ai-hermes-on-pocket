@@ -133,6 +133,10 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Mengeliminasi freeze/stuck berjam-jam pada tahap `Menyelaraskan shebang` dengan membatasi `termux-fix-shebang` hanya pada binary tools utama (`bin/*`, `tools/npm/bin/*`) tanpa memindai rekursif ke dalam 50.000+ file `node_modules`.
   - Merapikan struktur repositori dengan memindahkan file pendukung build & RnD ke folder `build/`: `build/diagnose.sh`, `build/Dockerfile`, `build/install.sh`, `build/restart.sh`, dan `build/TODO.md`.
   - Menyesuaikan referensi path project root di `build/install.sh` & `build/restart.sh`, serta memperbarui `CONTRIBUTING.md` dan `AGENT.md`.
+- [x] **Relokasi File PPT Target ke Root Project**:
+  - Mengeluarkan file presentasi utama (`DevFest Jogjakarta 2026 - Workshop AI.pptx`) dari folder `assets/` ke root direktori repositori agar mudah diakses.
+  - Mempertahankan `assets/template.pptx` tetap di dalam `assets/` sebagai master style reference yang berstatus murni Read-Only.
+  - Memperbarui dokumentasi instruksi dan path target di `PROMPT_PPT.md` dan `AGENT.md`.
 
 ---
 

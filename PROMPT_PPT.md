@@ -2,11 +2,11 @@
 
 Dokumen ini adalah **Blueprint & Draft Konten Presentasi** yang telah disesuaikan secara presisi dengan struktur shape, tipografi, dan gaya visual dari:
 - 🔒 **Master Style Reference (JANGAN DIEDIT / READ-ONLY)**: [`assets/template.pptx`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/template.pptx) *(Salinan murni 12 archetype slide asli untuk acuan tema & pemetaan style oleh AI — file ini TIDAK BOLEH diubah/ditimpa)*
-- ✏️ **Target File Presentasi (FILE YANG DIEDIT)**: [`assets/DevFest Jogjakarta 2026 - Workshop AI.pptx`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/DevFest%20Jogjakarta%202026%20-%20Workshop%20AI.pptx) *(Seluruh hasil generate & update slide presentasi wajib ditulis ke file ini)*
+- ✏️ **Target File Presentasi (FILE YANG DIEDIT)**: [`DevFest Jogjakarta 2026 - Workshop AI.pptx`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/DevFest%20Jogjakarta%202026%20-%20Workshop%20AI.pptx) *(File presentasi utama telah dikeluarkan dari `assets/` ke root direktori. Seluruh hasil generate & update slide presentasi wajib ditulis ke file ini di root)*
 
 > **⚠️ ATURAN WAJIB UNTUK AI AGENT:**
-> - **DILARANG KERAS mengedit atau menimpa [`assets/template.pptx`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/template.pptx)**. Gunakan `assets/template.pptx` murni sebagai sumber bacaan (*read-only source*) untuk menyontek layout/style slide.
-> - **File yang wajib diedit/di-generate adalah [`assets/DevFest Jogjakarta 2026 - Workshop AI.pptx`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/DevFest%20Jogjakarta%202026%20-%20Workshop%20AI.pptx)**.
+> - **DILARANG KERAS mengedit atau menimpa [`assets/template.pptx`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/template.pptx)**. Gunakan `assets/template.pptx` murni sebagai sumber acuan (*read-only source*) untuk menyontek layout/style slide.
+> - **File yang wajib diedit/di-generate adalah [`DevFest Jogjakarta 2026 - Workshop AI.pptx`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/DevFest%20Jogjakarta%202026%20-%20Workshop%20AI.pptx)** yang berlokasi di **root direktori project** (bukan di dalam `assets/`). Template master tetap berada di dalam `assets/template.pptx`.
 
 ---
 
