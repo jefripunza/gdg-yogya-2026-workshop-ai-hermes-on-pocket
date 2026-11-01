@@ -121,6 +121,9 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Menghapus blok `CLI` pada Slide 9 dan memperjelas label perintah instalasi untuk **Termux (HP Android)**, **Linux & macOS**, dan **Windows**.
   - Menambahkan label `STEP 03` pada Slide 11, memperjelas persiapan Mobile & Laptop di `README.md`, dan memisahkan baris teks sosial pemateri di Slide 19.
   - Mengonfigurasi `mobile.sh` agar otomatis mengarahkan repo APT Termux (`$PREFIX/etc/apt/sources.list` dan `$PREFIX/etc/termux/chosen_mirrors`) dari `termux.net` ke mirror cepat Cloudflare (`https://packages-cf.termux.dev/apt/termux-main stable main`) sebelum `pkg update`.
+- [x] **Penambahan Pengalaman Lapak Merangin di Slide 2 & Slide 3 Baru (Bukti Dokumentasi SakuTani, Lapak Merangin, Kementerian PU, PT Minarta, & Pasang Server)**:
+  - Menambahkan **Lapak Merangin** (*Co-Founder & Lead Developer — Local E-Commerce & Direktori UMKM Kab. Merangin, Jambi*) tepat di antara posisi *Principal Software Engineer* dan *CEO & Co-Founder SakuTani* pada **Slide 2**.
+  - Mengonversi 5 foto bukti pengalaman ke format PNG standar (`3.1.bukti-sakutani.png`, `3.2.bukti-lapak-merangin.png`, `3.3.pengalaman-meeting-kementerian-pu.png`, `3.4.pengalaman-client-minarta.png`, `3.5.pengalaman-pasang-server-client.png`) dan menyisipkan **Slide 3 Baru** (*Jejak Karya: Startup Lokal, Instansi & Infrastruktur Enterprise*) di antara Slide 2 dan Slide 3 lama (total menjadi **20 slide**).
 
 ---
 
