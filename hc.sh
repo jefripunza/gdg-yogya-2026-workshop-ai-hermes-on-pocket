@@ -8,7 +8,7 @@
 set -e
 
 # Versi Script
-HC_SH_VERSION="v2.2.0"
+HC_SH_VERSION="v2.3.0"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -170,14 +170,7 @@ try {
 EOF
 
 export NODE_OPTIONS="--require $FIX_FILE"
-
-# Coba pasang paket native esbuild via apt jika ada di repo Termux
-if command -v apt-get >/dev/null 2>&1 && [ ! -f "$PREFIX_PATH/bin/esbuild" ]; then
-    apt-get install -y --allow-unauthenticated esbuild 2>/dev/null || true
-fi
-if [ -f "$PREFIX_PATH/bin/esbuild" ]; then
-    export ESBUILD_BINARY_PATH="$PREFIX_PATH/bin/esbuild"
-fi
+unset ESBUILD_BINARY_PATH 2>/dev/null || true
 
 # Perbaiki shebang script internal Hermes (khususnya npm-cli.js & node-deps.mjs)
 # agar tidak memicu error Android linker64 (ELF executable too small)
@@ -205,26 +198,6 @@ if [ -f "$NODE_DEPS" ] && command -v node >/dev/null 2>&1; then
     " "$NODE_DEPS" 2>/dev/null || true
 fi
 
-# Pre-build Web UI Hermes jika hermes_cli/web_dist belum ada
-WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
-if [ ! -d "$WEB_DIST" ] && [ -d "$HERMES_LIB/app" ] && command -v npm >/dev/null 2>&1; then
-    echo -e "${BLUE}Membangun Web UI Hermes ke ${WEB_DIST} (pertama kali, ~1 menit)...${NC}"
-    # Hapus sisa broken install esbuild jika ada
-    rm -rf "$HERMES_LIB/app/node_modules/esbuild" 2>/dev/null || true
-    (
-        export NODE_OPTIONS="--require $FIX_FILE"
-        [ -n "${ESBUILD_BINARY_PATH:-}" ] && export ESBUILD_BINARY_PATH="$ESBUILD_BINARY_PATH"
-        cd "$HERMES_LIB/app"
-        npm install --workspace web
-        npm run build -w web
-    ) > "$HERMES_DIR/logs/web_build.log" 2>&1 || true
-    if [ -d "$WEB_DIST" ]; then
-        echo -e "${GREEN}✓ Web UI Hermes berhasil dibangun!${NC}"
-    else
-        echo -e "${YELLOW}[!] Build web_dist via npm sedang berjalan atau cek: ~/.hermes/logs/web_build.log${NC}"
-    fi
-fi
-
 # Restart atau jalankan Hermes Gateway
 if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
     echo -e "${YELLOW}Merestart Hermes Gateway...${NC}"
@@ -233,7 +206,8 @@ if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
 fi
 nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 
-# Tentukan flags hermes dashboard: gunakan --skip-build jika web_dist sudah tersedia
+# Tentukan flags hermes dashboard
+WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
 DASHBOARD_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
 if [ -d "$WEB_DIST" ]; then
     DASHBOARD_FLAGS="$DASHBOARD_FLAGS --skip-build"
@@ -246,10 +220,13 @@ pkill -f "socat.*9119" || true
 sleep 1
 
 if command -v socat >/dev/null 2>&1; then
+    # Jalankan socat relay terlebih dahulu agar port 9119 langsung siap begitu 9118 hidup
+    nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
+
     NODE_OPTIONS="--require $FIX_FILE" nohup hermes dashboard $DASHBOARD_FLAGS > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
     echo -n "Menunggu Hermes Web UI siap di port :9118"
     DASHBOARD_READY=false
-    for i in $(seq 1 30); do
+    for i in $(seq 1 90); do
         if netstat -tlpn 2>/dev/null | grep -q "9118" || curl -sI "http://127.0.0.1:9118" 2>/dev/null | grep -q "HTTP"; then
             DASHBOARD_READY=true
             echo -e " ${GREEN}[SIAP!]${NC}"
@@ -259,13 +236,18 @@ if command -v socat >/dev/null 2>&1; then
             echo -e "\n${RED}[!] Hermes Dashboard berhenti.${NC}"
             break
         fi
+        # Tampilkan status jika sedang kompilasi web UI
+        if [ "$i" -eq 15 ] || [ "$i" -eq 40 ] || [ "$i" -eq 65 ]; then
+            if grep -q "Building the web UI" "$HERMES_DIR/logs/dashboard.log" 2>/dev/null; then
+                echo -n " [Kompilasi Web UI...]"
+            fi
+        fi
         echo -n "."
         sleep 1
     done
 
     if [ "$DASHBOARD_READY" = true ]; then
-        nohup socat TCP-LISTEN:9119,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:9118 >/dev/null 2>&1 &
-        sleep 1
+        echo -e "${GREEN}✓ Hermes Web Dashboard berhasil terhubung ke relay :9119${NC}"
     else
         echo -e "\n${YELLOW}Log Terakhir Hermes Dashboard (~/.hermes/logs/dashboard.log):${NC}"
         tail -n 20 "$HERMES_DIR/logs/dashboard.log" 2>/dev/null || true
