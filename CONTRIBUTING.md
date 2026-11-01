@@ -48,43 +48,38 @@ cd gdg-yogya-2026-workshop-ai-hermes-on-pocket
    bash mobile.sh --local
    ```
 
-### Cara 3: Menggunakan Docker Compose & Script `docker.sh` (Multi-Container Laptop Testing)
+### Cara 3: Menggunakan Docker Compose & Script `laptop.sh` (Multi-Container Laptop Testing)
 Untuk menguji arsitektur multi-container (`decolua/9router` dan `nousresearch/hermes-agent`) di laptop tanpa Termux simulator:
 
-1. **Jalankan Container**:
+1. **Jalankan / Reset Ulang Bersih Container**:
    ```bash
-   ./docker.sh run
+   ./laptop.sh
+   # atau
+   ./laptop.sh restart
    ```
-   *(Secara otomatis menjalankan `docker compose up -d` dan menampilkan status link web dashboard).*
+   *(Secara otomatis mematikan container lama, menyalakan ulang `docker compose up -d`, meng-inject `hc.sh` & `ht.sh`, dan menampilkan status link web dashboard).*
 
-2. **Restart Container**:
-   Jika Anda mengubah konfigurasi atau ingin memuat ulang services:
-   ```bash
-   ./docker.sh restart
-   ```
-
-3. **Perintah Berguna Lainnya di `docker.sh`**:
+2. **Perintah Berguna Lainnya di `laptop.sh`**:
    - Masuk ke terminal container Hermes:
      ```bash
-     ./docker.sh exec
+     ./laptop.sh exec
      ```
    - Pantau logs secara realtime:
      ```bash
-     ./docker.sh logs           # Semua service
-     ./docker.sh logs 9router   # Khusus 9Router
-     ./docker.sh logs hermes    # Khusus Hermes
+     ./laptop.sh logs           # Semua service
+     ./laptop.sh logs 9router   # Khusus 9Router
+     ./laptop.sh logs hermes    # Khusus Hermes
      ```
    - Hentikan atau bersihkan container:
      ```bash
-     ./docker.sh stop   # Hentikan sementara
-     ./docker.sh down   # Hentikan dan bersihkan container
+     ./laptop.sh stop   # Hentikan sementara
+     ./laptop.sh down   # Hentikan dan bersihkan container
      ```
 
-4. **Testing Setup Script di Hermes Container**:
-   Setelah container aktif, uji coba `laptop.sh`, `hc.sh`, dan `ht.sh`:
-   ```bash
-   docker exec -it hermes-agent bash -c "curl -fsSL https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master/laptop.sh | bash"
-   ```
+3. **Testing Setup Otomatis di Windows**:
+   Untuk menguji alur instalasi di Windows:
+   - Command Prompt (CMD): `laptop.bat`
+   - PowerShell: `.\laptop.ps1`
 
 ---
 
@@ -98,7 +93,7 @@ Sebelum mengajukan Pull Request (PR), pastikan kode Anda mematuhi standar beriku
 2. **Validasi Sintaks Script**:
    Pastikan tidak ada kesalahan sintaksis bash sebelum commit:
    ```bash
-   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh && bash -n docker.sh
+   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh
    ```
 3. **Pemisahan Konteks `README.md`**:
    - `README.md` ditujukan khusus untuk **peserta workshop**. Jangan memasukkan perintah Docker host ke dalam `README.md`.

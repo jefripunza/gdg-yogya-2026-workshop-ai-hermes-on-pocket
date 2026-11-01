@@ -76,15 +76,20 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Membuat script helper `laptop.sh` yang dieksekusi via `curl` di dalam `docker exec hermes-agent` untuk menempelkan `hc.sh` dan `ht.sh`.
   - Menyesuaikan `hc.sh` dan `ht.sh` agar portable (shebang `#!/usr/bin/env bash`, auto-detect DNS docker `9router`, `$HERMES_HOME=/opt/data`).
   - Menambahkan panduan step-by-step di `README.md` (bagian *"Alternatif Laptop / Non-Android"* tepat di bawah section Selamat).
-- [x] **Docker Helper CLI (`docker.sh`) & Dokumentasi di `CONTRIBUTING.md`**:
-  - Membuat script helper `docker.sh` untuk otomasi perintah: `run`, `restart`, `stop`, `down`, `logs`, dan `exec`.
-  - Mendokumentasikan workflow testing multi-container menggunakan `docker.sh` di `CONTRIBUTING.md` (Cara 3).
-  - Mendaftarkan `docker.sh` di `AGENT.md` dan memperbarui validasi sintaks bash.
+- [x] **Docker Helper CLI (Dipusatkan ke `laptop.sh`)**:
+  - Awalnya membuat `docker.sh`, kemudian dikonsolidasikan langsung ke `laptop.sh` agar satu script dapat menangani reset, start, dan manajemen container secara terpadu.
+  - Dokumentasi diperbarui di `CONTRIBUTING.md` (Cara 3).
 - [x] **Perbaikan Hermes Dashboard Docker Compose (`ERR_CONNECTION_RESET`)**:
   - Menyelesaikan issue connection reset pada `localhost:9119` akibat kebijakan keamanan Hermes yang membatasi dashboard ke loopback `127.0.0.1` jika tidak ada basic auth.
   - Menyuntikkan environment `HERMES_DASHBOARD=1`, `HERMES_DASHBOARD_HOST=0.0.0.0`, `HERMES_DASHBOARD_PORT=9119`, `HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin`, dan `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=123456` pada `docker-compose.yml`.
   - Menambahkan argumen `command: gateway run` agar container berjalan sebagai gateway daemon permanen di bawah supervisi s6-overlay tanpa shutdown otomatis akibat ketiadaan terminal TTY.
   - Memperbarui dokumentasi di `README.md` dan `AGENT.md`.
+- [x] **Konsolidasi CLI Manager ke `laptop.sh` & Penghapusan `docker.sh`**:
+  - Memindahkan seluruh fitur manajemen container (`run`, `restart`, `stop`, `down`, `logs`, `exec`, `status`) dari `docker.sh` ke `laptop.sh`.
+  - Menghapus file redundan `docker.sh`.
+  - Menambahkan kapabilitas reset & up ulang bersih (kill container lama lalu up ulang fresh & re-inject) pada eksekusi berulang `laptop.sh` (mirip `restart.sh`).
+  - Menambahkan alur reset bersih yang sama pada `laptop.bat` dan `laptop.ps1` untuk pengguna Windows.
+  - Memperbarui dokumentasi di `CONTRIBUTING.md`, `AGENT.md`, dan `README.md`.
 
 ---
 

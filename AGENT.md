@@ -20,8 +20,9 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 | File | Target Environment | Fungsi Utama |
 |---|---|---|
 | `mobile.sh` | **Android Termux** | Script one-click installer otomatis yang dijalankan peserta workshop via `curl ... \| bash`. |
-| `laptop.sh` | **Laptop Docker** | Helper script one-liner untuk peserta laptop/iOS menempelkan `hc.sh` & `ht.sh` di dalam container Hermes. |
-| `docker.sh` | **Host Docker (Laptop/RnD)** | Script helper CLI untuk run, restart, stop, dan kelola container Docker Compose. |
+| `laptop.sh` | **macOS / Linux Host** | One-click setup & reset: unduh compose, kill & up ulang container, inject script, dan CLI manager. |
+| `laptop.bat` | **Windows CMD Host** | One-click setup & reset Windows CMD via `certutil`: unduh compose, restart container, & inject script. |
+| `laptop.ps1` | **Windows PowerShell** | One-click setup & reset native PowerShell via `irm ... \| iex`: unduh, restart container, & inject script. |
 | `docker-compose.yml` | **Laptop Docker** | Spesifikasi compose multi-container (`decolua/9router` & `nousresearch/hermes-agent`). |
 | `hc.sh` | **Termux & Laptop** | Script konfigurasi Hermes (`./hc.sh <combo> <api-key>`) untuk menghubungkan Hermes ke 9Router. |
 | `ht.sh` | **Termux & Laptop** | Script integrasi Telegram (`./ht.sh <token> [userid]`) untuk mengaktifkan bot Hermes di Telegram. |
@@ -152,7 +153,7 @@ Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
    - `http://localhost:9119` -> Hermes Web Dashboard
 3. **Validasi Sintaks Script**:
    ```bash
-   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh && bash -n docker.sh
+   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n install.sh && bash -n restart.sh && bash -n laptop.sh
    ```
 4. **Pembaruan Task**:
    - Setelah selesai mengimplementasikan fitur atau perbaikan bug, perbarui checklist dan riwayat di `TODO.md`.
