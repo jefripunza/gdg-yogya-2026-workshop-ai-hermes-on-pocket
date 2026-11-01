@@ -18,6 +18,10 @@ for arg in "$@"; do
     esac
 done
 
+# Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
+# agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
+MOBILE_SH_VERSION="v2.0.0"
+
 # Warna output terminal
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -26,7 +30,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${BLUE}================================================================${NC}"
-echo -e "${GREEN}   Hermes Agent & 9Router Auto-Installer for Termux             ${NC}"
+echo -e "${GREEN}   Hermes Agent & 9Router Auto-Installer for Termux (${MOBILE_SH_VERSION})  ${NC}"
 echo -e "${BLUE}================================================================${NC}"
 
 # Validasi environment Termux PREFIX & HOME
@@ -48,14 +52,14 @@ fi
 # ------------------------------------------------------------------------------
 # 1. Konfigurasi Repo Cepat (Cloudflare Mirror) & Dependensi Dasar
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[1/6] Mengatur repositori Termux ke Cloudflare Mirror (packages-cf.termux.dev)...${NC}"
+echo -e "\n${BLUE}[1/6] [${MOBILE_SH_VERSION}] Mengatur repositori Termux ke Cloudflare Mirror (packages-cf.termux.dev)...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 
-# Hapus file repo lama (seperti game.list / science.list / termux.net) selain hermes-agent.list
-mkdir -p "$PREFIX/etc/apt/sources.list.d" "$PREFIX/etc/apt/apt.conf.d"
-find "$PREFIX/etc/apt/sources.list.d" -type f ! -name "hermes-agent.list" -delete 2>/dev/null || true
+# Bersihkan total seluruh file di sources.list.d (seperti game.list, science.list, main.sources, dll.)
+mkdir -p "$PREFIX/etc/apt/sources.list.d" "$PREFIX/etc/apt/apt.conf.d" "$PREFIX/etc/apt/trusted.gpg.d" "$PREFIX/share/keyrings"
+rm -rf "$PREFIX/etc/apt/sources.list.d/"* 2>/dev/null || true
 
-# Bersihkan seluruh mirror lama (termasuk termux.net) agar pkg tidak pernah fallback ke termux.net
+# Bersihkan seluruh mirror lama (termasuk termux.net) agar tidak pernah fallback ke termux.net
 rm -rf "$PREFIX/etc/termux/mirrors" "$PREFIX/etc/termux/chosen_mirrors"
 mkdir -p "$PREFIX/etc/termux/mirrors/default"
 cat << 'EOF' > "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev"
@@ -67,21 +71,32 @@ X11="https://packages-cf.termux.dev/apt/termux-x11"
 EOF
 ln -sf "$PREFIX/etc/termux/mirrors/default/packages-cf.termux.dev" "$PREFIX/etc/termux/chosen_mirrors"
 
-# Gunakan [trusted=yes] & AllowInsecureRepositories agar tidak gagal NO_PUBKEY 5A897D96E57CF20C pada Termux lama
+# Unduh langsung GPG Public Key resmi Termux (5A897D96E57CF20C - termux-autobuilds.gpg)
+# agar verifikasi signature packages-cf.termux.dev tidak gagal NO_PUBKEY 5A897D96E57CF20C
+echo -e "${BLUE}Mengunduh GPG Key resmi Termux (5A897D96E57CF20C)...${NC}"
+curl -fsSL "https://raw.githubusercontent.com/termux/termux-packages/master/packages/termux-keyring/termux-autobuilds.gpg" \
+    -o "$PREFIX/etc/apt/trusted.gpg.d/termux-autobuilds.gpg" 2>/dev/null || true
+cp -f "$PREFIX/etc/apt/trusted.gpg.d/termux-autobuilds.gpg" "$PREFIX/share/keyrings/termux-autobuilds.gpg" 2>/dev/null || true
+
+curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5A897D96E57CF20C" \
+    -o "$PREFIX/etc/apt/trusted.gpg.d/termux-5A897D96E57CF20C.asc" 2>/dev/null || true
+
+# Gunakan [trusted=yes] & AllowInsecureRepositories sebagai pengaman ganda
 echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
 cat << 'EOF' > "$PREFIX/etc/apt/apt.conf.d/99-termux-cloudflare"
 Acquire::AllowInsecureRepositories "true";
 Acquire::AllowDowngradeToInsecureRepositories "true";
 APT::Get::AllowUnauthenticated "true";
+APT::Ignore-Hold "true";
 Dpkg::Options {
    "--force-confdef";
    "--force-confold";
 };
 EOF
-echo -e "${GREEN}✓ Repo Termux dikunci ke: https://packages-cf.termux.dev/apt/termux-main${NC}"
+echo -e "${GREEN}✓ [${MOBILE_SH_VERSION}] Repo Termux dikunci ke: $(cat "$PREFIX/etc/apt/sources.list")${NC}"
 
-echo -e "\n${BLUE}Memperbarui keyring (5A897D96E57CF20C) dan menginstal paket-paket dasar Termux...${NC}"
-# Gunakan apt-get secara langsung (bukan wrapper pkg) agar [trusted=yes] di sources.list tidak ditimpa
+echo -e "\n${BLUE}[${MOBILE_SH_VERSION}] Memperbarui keyring dan menginstal paket-paket dasar Termux via apt-get...${NC}"
+# Gunakan apt-get secara langsung (bukan wrapper pkg) agar sources.list tidak ditimpa balik ke termux.net
 apt-get update -y \
     -o Acquire::AllowInsecureRepositories=true \
     -o Acquire::AllowDowngradeToInsecureRepositories=true \
@@ -94,9 +109,9 @@ apt-get install -y --allow-unauthenticated \
     -o Dpkg::Options::="--force-confold" \
     termux-keyring || true
 
-# Pastikan kembali sources.list tetap mengarah ke Cloudflare Mirror setelah termux-keyring diperbarui
+# Kunci kembali sources.list ke Cloudflare Mirror setelah termux-keyring diperbarui
 echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
-find "$PREFIX/etc/apt/sources.list.d" -type f ! -name "hermes-agent.list" -delete 2>/dev/null || true
+rm -rf "$PREFIX/etc/apt/sources.list.d/"* 2>/dev/null || true
 
 apt-get update -y \
     -o Acquire::AllowInsecureRepositories=true \
