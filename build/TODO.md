@@ -137,6 +137,9 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Mengeluarkan file presentasi utama (`DevFest Jogjakarta 2026 - Workshop AI.pptx`) dari folder `assets/` ke root direktori repositori agar mudah diakses.
   - Mempertahankan `assets/template.pptx` tetap di dalam `assets/` sebagai master style reference yang berstatus murni Read-Only.
   - Memperbarui dokumentasi instruksi dan path target di `PROMPT_PPT.md` dan `AGENT.md`.
+- [x] **Pembaruan Sumber Aplikasi Termux (Google Play Store vs F-Droid)**:
+  - Membalik rekomendasi instalasi Termux di `README.md` menjadi mengarahkan peserta ke [Google Play Store](https://play.google.com/store/apps/details?id=com.termux) (versi terbaru/paling update) dan tidak menggunakan F-Droid.
+  - Menyelaraskan referensi teks pada `PROMPT_PPT.md` dan file presentasi `DevFest Jogjakarta 2026 - Workshop AI.pptx` (Slide 7 & 9).
 
 ---
 

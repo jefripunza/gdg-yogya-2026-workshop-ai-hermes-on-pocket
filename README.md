@@ -37,7 +37,7 @@ Pastikan Anda telah menyiapkan hal-hal berikut sesuai perangkat yang Anda gunaka
 3. **Koneksi Internet**: Diperlukan untuk mengunduh paket/container dan terhubung ke API Gemini & Telegram.
 
 ### 📱 Jalur 1 — Pengguna Smartphone Android
-1. **Aplikasi Termux**: Unduh dan pasang dari [F-Droid](https://f-droid.org/en/packages/com.termux/) *(Penting: jangan gunakan versi Google Play Store karena sudah usang dan tidak diperbarui)*.
+1. **Aplikasi Termux**: Unduh dan pasang dari [Google Play Store](https://play.google.com/store/apps/details?id=com.termux) *(Penting: gunakan versi Google Play Store karena saat ini merupakan versi yang paling update, jangan gunakan versi dari F-Droid)*.
 2. **Pengaturan Baterai**: Disarankan mengatur izin penggunaan baterai aplikasi Termux ke **"Unrestricted" / "Tidak Dibatasi"** agar proses AI tetap hidup di latar belakang saat layar terkunci.
 
 ### 💻 Jalur 2 — Pengguna Laptop (macOS, Linux, atau Windows / Pengguna iOS)

@@ -147,7 +147,7 @@ Seluruh file gambar di folder [`assets/`](file:///Users/jefripunza/Documents/Pro
 ### 🖥️ SLIDE 7 — Persiapan & Pilihan Jalur Perangkat (`Template Slide 6` + `7.1`)
 - **Heading (`38pt Bold #FFFFFF`)**: `Bisa di HP Android Maupun di Laptop Anda!`
 - **3 Columns**:
-  1. `Jalur 1: HP Android` (`Aplikasi Termux F-Droid` — `mobile.sh`)
+  1. `Jalur 1: HP Android` (`Aplikasi Termux Google Play Store` — `mobile.sh`)
   2. `Jalur 2: Laptop` (`macOS, Linux, atau Windows Docker` — `laptop.sh` / `laptop.ps1`)
   3. `Tiket Masuk Wajib` (`Google AI Studio & Akun Telegram` + gambar `7.1.persiapan-botfather-new-bot.png`)
 
@@ -165,7 +165,7 @@ Seluruh file gambar di folder [`assets/`](file:///Users/jefripunza/Documents/Pro
 - **Left QR Code**: [`assets/9.1.qr-github-repo-gdg.png`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/9.1.qr-github-repo-gdg.png) (QR Code menuju `https://github.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket` dengan logo [`assets/9.2.logo-gdg-transparent.png`](file:///Users/jefripunza/Documents/Projects/gdg-yogya-2026-workshop-ai-hermes-on-pocket/assets/9.2.logo-gdg-transparent.png) di tengah).
 - **Left Title (`46pt Bold #FFFFFF`)**: `Scan QR & Copy Perintah`
 - **Right 3 Platform Installer Blocks (Tanpa `CLI`)**:
-  1. **`APK` — 1. Untuk Termux (Smartphone Android)**: `curl -fsSL .../mobile.sh | bash` (dijalankan di aplikasi Termux F-Droid)
+  1. **`APK` — 1. Untuk Termux (Smartphone Android)**: `curl -fsSL .../mobile.sh | bash` (dijalankan di aplikasi Termux Google Play Store)
   2. **`SH` — 2. Untuk Linux & macOS**: `curl -fsSL .../laptop.sh | bash` (dijalankan di Terminal Laptop, Restart: `./laptop.sh`)
   3. **`WIN` — 3. Untuk Windows**: `irm .../laptop.ps1 | iex` (dijalankan di PowerShell Windows, atau `laptop.bat` di CMD)
 
