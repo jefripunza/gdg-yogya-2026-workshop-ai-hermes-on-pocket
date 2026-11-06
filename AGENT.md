@@ -116,6 +116,11 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
   1. Seluruh operasi `apt-get` (`dist-upgrade`, `install`, `-f install`) dan konfigurasi `apt.conf.d/99-termux-cloudflare` **WAJIB** menyertakan opsi `Dpkg::Options { "--force-overwrite"; };`.
   2. `mobile.sh` harus selalu melakukan *auto-recovery* pada awal eksekusi dengan menjalankan `dpkg --configure -a --force-overwrite` dan menginstal file arsip `.deb` yang mengalami konflik dengan `--force-overwrite` sebelum memulai upgrade.
 
+### 11. Jaminan Izin Eksekusi DPkg Hook & Multi-Tier NPM Resolution
+- **DPkg Hook `chmod 755`**: Saat package `bash` atau `python` di-unpack oleh dpkg, postinst trigger `py3compile` bisa mengalami `PermissionError: [Errno 13] Permission denied: '/data/data/com.termux/files/usr/bin/bash'` jika `bash` belum berstatus executable. Konfigurasi `apt.conf.d/99-termux-cloudflare` wajib menyertakan `DPkg::Pre-Invoke` dan `DPkg::Post-Invoke` untuk selalu melakukan `chmod 755` pada `$PREFIX/bin/bash` dan `$PREFIX/bin/*`.
+- **Multi-Tier NPM Resolution**: Jangan pernah berasumsi perintah `npm` langsung tersedia hanya dari `apt-get install nodejs`. `mobile.sh` harus memeriksa secara bertingkat: `command -v npm` -> `$PREFIX/bin/npm` -> `$PREFIX/lib/node_modules/npm/bin/npm-cli.js` (symlink otomatis) -> bundled npm milik Hermes Agent (`$HERMES_LIB/tools/npm`).
+- **Universal Android 15 Node Hook (`node_android_fix.cjs`)**: Hook ini wajib dibuat dan dimasukkan ke `NODE_OPTIONS` **sebelum** perintah `npm install -g 9router` dijalankan, agar seluruh child process npm terlindungi dari crash dynamic linker Android 15.
+
 ---
 
 ## 📖 Step-by-Step Runbook (Mulai dari Nol hingga Siap Pakai)

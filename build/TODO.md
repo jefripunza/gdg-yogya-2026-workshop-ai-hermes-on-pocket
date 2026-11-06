@@ -144,6 +144,10 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Mengatasi error dpkg file overwrite conflict: `dpkg: error processing archive ... libandroid-glob: trying to overwrite '/data/data/com.termux/files/usr/include/glob.h', which is also in package ndk-sysroot 27c`.
   - Menambahkan `--force-overwrite` ke konfigurasi `Dpkg::Options` di `99-termux-cloudflare` dan seluruh pemanggilan `apt-get` (`dist-upgrade`, `install`, `-f install`).
   - Menambahkan auto-recovery dpkg di awal eksekusi `mobile.sh` untuk menyelesaikan broken/half-installed packages dari sesi sebelumnya.
+- [x] **Perbaikan 'npm: command not found' & Permission Denied py3compile (v2.8.0)**:
+  - Mengatasi crash `py3compile Permission denied: '/data/data/com.termux/files/usr/bin/bash'` dengan menambahkan `DPkg::Pre-Invoke` dan `DPkg::Post-Invoke` hooks untuk otomatis `chmod 755` pada `$PREFIX/bin/bash` dan seluruh binary saat proses package trigger APT.
+  - Mengatasi error `line 283: npm: command not found` dengan menerapkan resolusi bertingkat (multi-tier resolution) yang memeriksa PATH, `$PREFIX/bin/npm`, symlink ke `$PREFIX/lib/node_modules/npm`, dan fallback langsung ke bundled npm milik Hermes Agent (`$HERMES_LIB/tools/npm`).
+  - Menginisialisasi Universal Android 15 Node Hook (`node_android_fix.cjs`) sebelum perintah instalasi 9Router agar child processes terlindungi dari crash linker Android 15.
 
 ---
 
