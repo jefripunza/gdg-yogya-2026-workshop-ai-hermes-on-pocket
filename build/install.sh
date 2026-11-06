@@ -13,6 +13,7 @@ MOBILE_SCRIPT="${PROJECT_ROOT}/mobile.sh"
 HC_SCRIPT="${PROJECT_ROOT}/hc.sh"
 HT_SCRIPT="${PROJECT_ROOT}/ht.sh"
 DIAGNOSE_SCRIPT="${PROJECT_ROOT}/diagnose.sh"
+WEB_DIST_TAR="${PROJECT_ROOT}/web_dist.tar.gz"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -61,11 +62,14 @@ fi
 
 echo -e "${GREEN}✓ Container '${CONTAINER_NAME}' aktif dengan port forwarding.${NC}"
 
-echo -e "\n${BLUE}=== [2/3] Menyalin Script (mobile.sh, hc.sh, ht.sh, diagnose.sh) ke Container ===${NC}"
+echo -e "\n${BLUE}=== [2/3] Menyalin Script & Aset (mobile.sh, hc.sh, ht.sh, diagnose.sh, web_dist.tar.gz) ke Container ===${NC}"
 docker cp "${MOBILE_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/mobile.sh"
 docker cp "${HC_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/hc.sh"
 docker cp "${HT_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/ht.sh"
 docker cp "${DIAGNOSE_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/diagnose.sh"
+if [ -f "${WEB_DIST_TAR}" ]; then
+    docker cp "${WEB_DIST_TAR}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/web_dist.tar.gz"
+fi
 
 docker exec "${CONTAINER_NAME}" chmod +x \
     /data/data/com.termux/files/home/mobile.sh \

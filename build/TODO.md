@@ -161,6 +161,11 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Menghapus flag invalid `--skip-build` pada `hermes dashboard` di `mobile.sh` dan `hc.sh` yang menyebabkan Hermes Dashboard langsung crash saat `web_dist` tersedia.
   - Mengimplementasikan polling verifikasi kesehatan layanan (hingga 30s) di akhir proses instalasi sebelum info banner final.
   - Logika diagnostik kondisional: Jika `9Router (:20128)` dan `Hermes Dashboard (:9119)` berhasil di-hit OK, sistem **tidak** menjalankan `diagnose.sh`. Jika salah satu atau kedua port gagal diakses, sistem secara otomatis mengeksekusi `diagnose.sh` untuk menghasilkan laporan diagnosa mendalam (`~/diag_report.txt`).
+- [x] **Penyelesaian Crash 'Signals.SIGILL: 4' & Pre-bundled web_dist (v2.12.0)**:
+  - Menempatkan bundle statis resmi `web_dist.tar.gz` (1.5 MB) di root repositori dan `assets/` untuk didownload langsung via GitHub raw URL oleh `mobile.sh` maupun diakses offline di laptop.
+  - Mengatasi error crash `Signals.SIGILL: 4` saat kompilasi frontend lokal `rolldown`/`vite` pada arsitektur ARM64 smartphone Android.
+  - Mengotomatisasi ekstraksi `web_dist` ke `$HERMES_LIB/app/hermes_cli/web_dist` dan `hermes_cli/web_dist` pada `mobile.sh` dan `hc.sh`.
+  - Mengaktifkan flag resmi `--skip-build` saat `web_dist` terpasang sehingga Hermes Dashboard langsung aktif dalam ~1 detik tanpa memicu kompilasi ulang.
 
 ---
 

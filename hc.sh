@@ -8,7 +8,7 @@
 set -e
 
 # Versi Script
-HC_SH_VERSION="v2.5.0"
+HC_SH_VERSION="v2.6.0"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -211,8 +211,36 @@ if pgrep -f "hermes.*gateway" >/dev/null 2>&1; then
 fi
 nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 
+# Pastikan Web UI Hermes (web_dist) tersedia untuk menghindari crash SIGILL saat build
+WEB_DIST_TARGET="$HERMES_LIB/app/hermes_cli"
+if [ ! -f "$WEB_DIST_TARGET/web_dist/index.html" ] && [ -d "$HERMES_LIB" ]; then
+    echo -e "${BLUE}Menyiapkan pre-built Web UI Hermes (web_dist)...${NC}"
+    mkdir -p "$WEB_DIST_TARGET" "$HERMES_LIB/hermes_cli"
+    TMP_TAR="${TMPDIR:-$PREFIX/tmp}/web_dist.tar.gz"
+    REPO_RAW_URL="https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master"
+    if [ -f "./web_dist.tar.gz" ]; then
+        cp -f ./web_dist.tar.gz "$TMP_TAR"
+    elif [ -f "./assets/web_dist.tar.gz" ]; then
+        cp -f ./assets/web_dist.tar.gz "$TMP_TAR"
+    else
+        curl -fsSL "${REPO_RAW_URL}/web_dist.tar.gz" -o "$TMP_TAR" 2>/dev/null || \
+        curl -fsSL "${REPO_RAW_URL}/assets/web_dist.tar.gz" -o "$TMP_TAR" 2>/dev/null || true
+    fi
+    if [ -f "$TMP_TAR" ]; then
+        tar -xzf "$TMP_TAR" -C "$WEB_DIST_TARGET" 2>/dev/null || true
+        cp -rf "$WEB_DIST_TARGET/web_dist" "$HERMES_LIB/hermes_cli/" 2>/dev/null || true
+        for d in "$HERMES_LIB/venv/lib"/python*/site-packages/hermes_cli; do
+            if [ -d "$d" ]; then cp -rf "$WEB_DIST_TARGET/web_dist" "$d/" 2>/dev/null || true; fi
+        done
+        rm -f "$TMP_TAR" 2>/dev/null || true
+    fi
+fi
+
 # Tentukan flags hermes dashboard
 DASHBOARD_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
+if [ -f "$HERMES_LIB/app/hermes_cli/web_dist/index.html" ] || [ -f "$HERMES_LIB/hermes_cli/web_dist/index.html" ]; then
+    DASHBOARD_FLAGS="$DASHBOARD_FLAGS --skip-build"
+fi
 
 # Restart atau jalankan Hermes Dashboard & Relay
 echo -e "${YELLOW}Merestart Hermes Dashboard & Relay...${NC}"
@@ -256,6 +284,9 @@ if command -v socat >/dev/null 2>&1; then
 else
     # Jika tidak ada socat (misal Docker container biasa), bind langsung ke 0.0.0.0:9119
     DASHBOARD_FLAGS_NO_SOCAT="--host 0.0.0.0 --port 9119 --no-open"
+    if [ -f "$HERMES_LIB/app/hermes_cli/web_dist/index.html" ] || [ -f "$HERMES_LIB/hermes_cli/web_dist/index.html" ]; then
+        DASHBOARD_FLAGS_NO_SOCAT="$DASHBOARD_FLAGS_NO_SOCAT --skip-build"
+    fi
     NODE_OPTIONS="--require $FIX_FILE" nohup hermes dashboard $DASHBOARD_FLAGS_NO_SOCAT > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
     sleep 2
 fi

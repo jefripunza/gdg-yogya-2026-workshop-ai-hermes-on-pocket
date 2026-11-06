@@ -21,7 +21,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.11.0"
+MOBILE_SH_VERSION="v2.12.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -445,6 +445,60 @@ EOF
 fi
 
 # ------------------------------------------------------------------------------
+# Mempersiapkan Pre-built Web UI Hermes (web_dist) untuk Menghindari SIGILL Crash
+# ------------------------------------------------------------------------------
+echo -e "\n${BLUE}Menyiapkan Web UI Hermes Dashboard (pre-built web_dist)...${NC}"
+WEB_DIST_TARGET="$HERMES_LIB/app/hermes_cli"
+mkdir -p "$WEB_DIST_TARGET" "$HERMES_LIB/hermes_cli"
+
+NEED_EXTRACT=false
+if [ ! -f "$WEB_DIST_TARGET/web_dist/index.html" ] || [ ! -d "$WEB_DIST_TARGET/web_dist/assets" ]; then
+    NEED_EXTRACT=true
+fi
+
+REPO_RAW_URL="https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master"
+
+if [ "$NEED_EXTRACT" = true ]; then
+    TMP_TAR="$PREFIX/tmp/web_dist.tar.gz"
+    mkdir -p "$PREFIX/tmp"
+    TAR_ACQUIRED=false
+
+    if [ "$IS_LOCAL" = true ]; then
+        if [ -f "./web_dist.tar.gz" ]; then
+            cp -f ./web_dist.tar.gz "$TMP_TAR" && TAR_ACQUIRED=true
+        elif [ -f "./assets/web_dist.tar.gz" ]; then
+            cp -f ./assets/web_dist.tar.gz "$TMP_TAR" && TAR_ACQUIRED=true
+        fi
+    fi
+
+    if [ "$TAR_ACQUIRED" = false ]; then
+        echo "Mengunduh pre-built web_dist.tar.gz dari repository..."
+        if curl -fsSL "${REPO_RAW_URL}/web_dist.tar.gz" -o "$TMP_TAR" 2>/dev/null || \
+           curl -fsSL "${REPO_RAW_URL}/assets/web_dist.tar.gz" -o "$TMP_TAR" 2>/dev/null; then
+            TAR_ACQUIRED=true
+        fi
+    fi
+
+    if [ "$TAR_ACQUIRED" = true ] && [ -f "$TMP_TAR" ]; then
+        tar -xzf "$TMP_TAR" -C "$WEB_DIST_TARGET" 2>/dev/null || true
+        if [ -d "$WEB_DIST_TARGET/web_dist" ]; then
+            cp -rf "$WEB_DIST_TARGET/web_dist" "$HERMES_LIB/hermes_cli/" 2>/dev/null || true
+            for d in "$HERMES_LIB/venv/lib"/python*/site-packages/hermes_cli; do
+                if [ -d "$d" ]; then
+                    cp -rf "$WEB_DIST_TARGET/web_dist" "$d/" 2>/dev/null || true
+                fi
+            done
+            echo -e "${GREEN}✓ Web UI Hermes berhasil dipasang di: ${WEB_DIST_TARGET}/web_dist${NC}"
+        fi
+        rm -f "$TMP_TAR" 2>/dev/null || true
+    else
+        echo -e "${YELLOW}[!] Gagal mengunduh web_dist.tar.gz. Hermes mungkin akan mencoba kompilasi lokal.${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ Web UI Hermes sudah tersedia di: ${WEB_DIST_TARGET}/web_dist${NC}"
+fi
+
+# ------------------------------------------------------------------------------
 # 4. Menyiapkan Script Pembantu (hc.sh, ht.sh & diagnose.sh)
 # ------------------------------------------------------------------------------
 echo -e "\n${BLUE}[5/6] Menyiapkan script konfigurasi (hc.sh, ht.sh, diagnose.sh)...${NC}"
@@ -535,6 +589,9 @@ if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
 elif command -v hermes >/dev/null 2>&1; then
     echo "[+] Menjalankan Hermes Web Dashboard di background..."
     DASHBOARD_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
+    if [ -f "$PREFIX/lib/hermes-agent/app/hermes_cli/web_dist/index.html" ] || [ -f "$PREFIX/lib/hermes-agent/hermes_cli/web_dist/index.html" ]; then
+        DASHBOARD_FLAGS="$DASHBOARD_FLAGS --skip-build"
+    fi
     nohup hermes dashboard $DASHBOARD_FLAGS > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
     sleep 3
     PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)

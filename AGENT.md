@@ -30,6 +30,7 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 | `build/install.sh` | **Host Docker (RnD)** | Script pengujian lokal: menyalin script ke container dan menjalankan `mobile.sh --local`. |
 | `build/Dockerfile` | **Host Docker (RnD)** | Base image Termux container (`termux/termux-docker:latest`). |
 | `diagnose.sh` / `build/diagnose.sh` | **Termux / Troubleshooting** | Script diagnosa kesehatan lingkungan Termux, binary Hermes, 9Router, port relay, dan log service. |
+| `web_dist.tar.gz` | **Pre-built Web UI Assets** | Bundle statis resmi Hermes Dashboard (~1.5 MB) di root & `assets/` untuk mencegah crash kompilasi `Signals.SIGILL: 4` di Termux. |
 | `README.md` | **Publik / Peserta** | Panduan ramah pemula untuk peserta workshop (100% bebas dari istilah Docker RnD). |
 | `TITLE.md` | **Proposal / Event** | Generator & kurasi pilihan judul workshop untuk diajukan ke panitia GDG. |
 | `PROMPT_PPT.md` | **Presentasi / Slide** | Blueprint pemetaan layout template PPTX DevFest 2026 & draft materi 19 slide workshop. |
@@ -63,9 +64,12 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 - **Remote Access Lock**: Saat diakses lewat Docker port forward, 9Router membaca IP gateway (`172.17.0.1`) sebagai akses remote dan mengunci login default.
 - **Solusi**: Set environment variable `INITIAL_PASSWORD=123456`. Hal ini membuat backend 9Router mengizinkan login awal dengan password `123456` tanpa blokir.
 
-### 5. Hermes Agent: Web UI Dashboard vs Gateway API
+### 5. Hermes Agent: Web UI Dashboard vs Gateway API & Solusi SIGILL: 4
 - Perintah `hermes gateway` **hanya** menjalankan backend pesan (Telegram/Discord/Cron).
-- Antarmuka web UI membutuhkan perintah: `hermes dashboard --host 127.0.0.1 --port 9118 --no-open`. (Catatan: CLI `hermes dashboard` tidak memiliki flag `--skip-build`; menyertakan flag tersebut menyebabkan crash `unrecognized arguments`).
+- Antarmuka web UI membutuhkan perintah: `hermes dashboard --host 127.0.0.1 --port 9118 --no-open`.
+- **Pre-built Web UI (`web_dist`) & Flag `--skip-build`**:
+  - Pada smartphone Android/Termux, bundler frontend Hermes (`rolldown`/`vite`) mengalami crash fatal `Signals.SIGILL: 4` (Illegal Instruction) akibat ketidakcocokan instruksi biner native Go/Rust pada arsitektur ARM64 CPU mobile.
+  - **Solusi**: File pre-built resmi `web_dist.tar.gz` (1.5 MB) disediakan langsung di repositori dan diekstrak ke `$HERMES_LIB/app/hermes_cli/web_dist`. Ketika `web_dist` tersedia, `hermes dashboard` dijalankan dengan flag `--skip-build` sehingga kompilasi lokal dilewati sepenuhnya dan antarmuka web langsung aktif dalam ~1 detik.
 
 ### 6. Kebijakan Keamanan Hermes Dashboard & Solusi Binding (Termux vs Docker Compose)
 - Hermes dashboard menolak di-bind ke non-loopback `0.0.0.0` jika belum ada auth provider external (OAuth/Nous Portal) atau Basic Auth.
@@ -177,7 +181,7 @@ Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
    bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n diagnose.sh && bash -n build/diagnose.sh && bash -n build/install.sh && bash -n build/restart.sh && bash -n laptop.sh
    ```
 4. **Aturan Versi `mobile.sh` (`MOBILE_SH_VERSION`)**:
-   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.11.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
+   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.12.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
 5. **Pembaruan Task**:
    - Setelah selesai mengimplementasikan fitur atau perbaikan bug, perbarui checklist dan riwayat di `build/TODO.md`.
 

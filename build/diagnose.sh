@@ -133,10 +133,10 @@ else
     HERMES_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent"
     WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
     echo -e "\nStatus folder web_dist ($WEB_DIST):"
-    if [ -d "$WEB_DIST" ]; then
-        echo "✓ Folder web_dist DITEMUKAN ($(ls -1 "$WEB_DIST" 2>/dev/null | wc -l) item)."
+    if [ -f "$WEB_DIST/index.html" ]; then
+        echo "✓ Folder web_dist DITEMUKAN & valid ($(ls -1 "$WEB_DIST" 2>/dev/null | wc -l) item)."
     else
-        echo "[!] Folder web_dist TIDAK DITEMUKAN (Hermes kemungkinan sedang atau gagal kompilasi UI)."
+        echo "[!] Folder web_dist TIDAK DITEMUKAN atau index.html belum ada."
     fi
 
     # Cek kredensial .env
@@ -154,7 +154,11 @@ else
         mkdir -p "$TMPDIR"
         TEST_LOG="$TMPDIR/hermes_dash_test.log"
         rm -f "$TEST_LOG"
-        hermes dashboard --host 127.0.0.1 --port 9118 --no-open > "$TEST_LOG" 2>&1 &
+        DASH_TEST_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
+        if [ -f "$WEB_DIST/index.html" ]; then
+            DASH_TEST_FLAGS="$DASH_TEST_FLAGS --skip-build"
+        fi
+        hermes dashboard $DASH_TEST_FLAGS > "$TEST_LOG" 2>&1 &
         TEST_PID=$!
         sleep 5
         if kill -0 $TEST_PID 2>/dev/null; then
@@ -183,3 +187,4 @@ echo -e "\n================================================================"
 echo "          DIAGNOSTIC SELESAI                                    "
 echo "Laporan tersimpan di: $REPORT_FILE"
 echo "================================================================"
+
