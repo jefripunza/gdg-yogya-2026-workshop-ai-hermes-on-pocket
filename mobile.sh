@@ -21,7 +21,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.8.0"
+MOBILE_SH_VERSION="v2.9.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -361,8 +361,8 @@ echo -e "\n${BLUE}[3/6] Menginstal dan memverifikasi Node.js & npm...${NC}"
 chmod 755 "$PREFIX/bin/bash" "$PREFIX/bin/sh" 2>/dev/null || true
 chmod +x "$PREFIX/bin"/* 2>/dev/null || true
 
-# Coba instal nodejs standar; jika konflik dengan nodejs-lts yang sudah terpasang, gunakan nodejs-lts
-if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+# Coba instal nodejs standar jika binary node belum ada
+if ! command -v node >/dev/null 2>&1; then
     apt-get install -y --allow-unauthenticated \
         -o Dpkg::Options::="--force-confdef" \
         -o Dpkg::Options::="--force-confold" \
@@ -373,62 +373,74 @@ if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
         -o Dpkg::Options::="--force-overwrite" nodejs-lts || true
 fi
 
-# Multi-Tier NPM Resolution & Recovery
-NPM_CMD=""
-if command -v npm >/dev/null 2>&1; then
-    NPM_CMD="npm"
-elif [ -f "$PREFIX/bin/npm" ]; then
-    chmod 755 "$PREFIX/bin/npm"
-    NPM_CMD="$PREFIX/bin/npm"
-elif [ -f "$PREFIX/lib/node_modules/npm/bin/npm-cli.js" ]; then
-    ln -sf "$PREFIX/lib/node_modules/npm/bin/npm-cli.js" "$PREFIX/bin/npm"
-    chmod 755 "$PREFIX/bin/npm"
-    if command -v termux-fix-shebang >/dev/null 2>&1; then
-        termux-fix-shebang "$PREFIX/bin/npm" 2>/dev/null || true
-    fi
-    NPM_CMD="$PREFIX/bin/npm"
-elif [ -f "$HERMES_LIB/tools/npm/bin/npm" ]; then
-    echo -e "${YELLOW}[INFO] Menautkan npm bundled Hermes ke \$PREFIX/bin/npm...${NC}"
-    ln -sf "$HERMES_LIB/tools/npm/bin/npm" "$PREFIX/bin/npm"
-    chmod 755 "$PREFIX/bin/npm"
-    if command -v termux-fix-shebang >/dev/null 2>&1; then
-        termux-fix-shebang "$PREFIX/bin/npm" 2>/dev/null || true
-    fi
-    NPM_CMD="$PREFIX/bin/npm"
-elif [ -f "$HERMES_LIB/tools/npm/lib/node_modules/npm/bin/npm-cli.js" ]; then
-    ln -sf "$HERMES_LIB/tools/npm/lib/node_modules/npm/bin/npm-cli.js" "$PREFIX/bin/npm"
-    chmod 755 "$PREFIX/bin/npm"
-    NPM_CMD="node $HERMES_LIB/tools/npm/lib/node_modules/npm/bin/npm-cli.js"
+# [Lapisan 1] Restorasi direktori core $PREFIX/lib/node_modules/npm dari bundled Hermes
+SYS_NPM_DIR="$PREFIX/lib/node_modules/npm"
+HERMES_NPM_DIR="$HERMES_LIB/tools/npm/lib/node_modules/npm"
+if [ ! -d "$SYS_NPM_DIR" ] && [ -d "$HERMES_NPM_DIR" ]; then
+    echo -e "${YELLOW}[INFO] Memulihkan direktori core npm dari bundled Hermes ke \$PREFIX/lib/node_modules/npm...${NC}"
+    mkdir -p "$PREFIX/lib/node_modules"
+    cp -rf "$HERMES_NPM_DIR" "$SYS_NPM_DIR" 2>/dev/null || true
+fi
+
+# [Lapisan 2] Bulletproof NPM & NPX Launcher Wrapper (kebal dari kegagalan symlink relatif)
+mkdir -p "$PREFIX/bin"
+cat << 'EOF' > "$PREFIX/bin/npm"
+#!/data/data/com.termux/files/usr/bin/sh
+PREFIX_BIN="${PREFIX:-/data/data/com.termux/files/usr}/bin"
+NODE_BIN="$PREFIX_BIN/node"
+SYS_CLI="${PREFIX:-/data/data/com.termux/files/usr}/lib/node_modules/npm/bin/npm-cli.js"
+HERMES_CLI="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent/tools/npm/lib/node_modules/npm/bin/npm-cli.js"
+
+if [ -f "$SYS_CLI" ]; then
+    exec "$NODE_BIN" "$SYS_CLI" "$@"
+elif [ -f "$HERMES_CLI" ]; then
+    exec "$NODE_BIN" "$HERMES_CLI" "$@"
 else
-    # Upaya perbaikan terakhir jika npm belum terdeteksi sama sekali
-    echo -e "${YELLOW}[INFO] Memperbaiki instalasi nodejs untuk memulihkan launcher npm...${NC}"
+    echo "Error: npm-cli.js tidak ditemukan di Termux." >&2
+    exit 1
+fi
+EOF
+chmod 755 "$PREFIX/bin/npm"
+
+cat << 'EOF' > "$PREFIX/bin/npx"
+#!/data/data/com.termux/files/usr/bin/sh
+PREFIX_BIN="${PREFIX:-/data/data/com.termux/files/usr}/bin"
+NODE_BIN="$PREFIX_BIN/node"
+SYS_NPX="${PREFIX:-/data/data/com.termux/files/usr}/lib/node_modules/npm/bin/npx-cli.js"
+HERMES_NPX="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent/tools/npm/lib/node_modules/npm/bin/npx-cli.js"
+
+if [ -f "$SYS_NPX" ]; then
+    exec "$NODE_BIN" "$SYS_NPX" "$@"
+elif [ -f "$HERMES_NPX" ]; then
+    exec "$NODE_BIN" "$HERMES_NPX" "$@"
+else
+    echo "Error: npx-cli.js tidak ditemukan di Termux." >&2
+    exit 1
+fi
+EOF
+chmod 755 "$PREFIX/bin/npx"
+
+if command -v termux-fix-shebang >/dev/null 2>&1; then
+    termux-fix-shebang "$PREFIX/bin/npm" "$PREFIX/bin/npx" 2>/dev/null || true
+fi
+
+# [Lapisan 3] Verifikasi eksekusi npm & Reinstall fallback jika perlu
+NPM_VER=$(npm -v 2>/dev/null || true)
+if [ -z "$NPM_VER" ]; then
+    echo -e "${YELLOW}[INFO] npm belum merespon. Menjalankan reinstall nodejs via APT...${NC}"
     apt-get install -y --reinstall --allow-unauthenticated \
         -o Dpkg::Options::="--force-confdef" \
         -o Dpkg::Options::="--force-confold" \
         -o Dpkg::Options::="--force-overwrite" nodejs || true
-    if command -v npm >/dev/null 2>&1; then
-        NPM_CMD="npm"
-    elif [ -f "$PREFIX/lib/node_modules/npm/bin/npm-cli.js" ]; then
-        ln -sf "$PREFIX/lib/node_modules/npm/bin/npm-cli.js" "$PREFIX/bin/npm"
-        chmod 755 "$PREFIX/bin/npm"
-        NPM_CMD="$PREFIX/bin/npm"
-    fi
+    NPM_VER=$(npm -v 2>/dev/null || echo "Tidak terdeteksi")
 fi
 
 NODE_VER=$(node -v 2>/dev/null || echo "Tidak terdeteksi")
-NPM_VER=$($NPM_CMD -v 2>/dev/null || echo "Tidak terdeteksi")
 echo -e "${GREEN}✓ Node.js terinstal: ${NODE_VER}${NC}"
-echo -e "${GREEN}✓ npm terinstal    : ${NPM_VER}${NC}"
-
-# Validasi akhir ketersediaan executor npm
-if [ -z "$NPM_CMD" ]; then
-    echo -e "${RED}[ERROR] Gagal mendeteksi binary atau launcher npm di Termux.${NC}"
-    echo -e "${YELLOW}Silakan coba jalankan manual: pkg install -y nodejs${NC}"
-    exit 1
-fi
+echo -e "${GREEN}✓ npm terinstal    : v${NPM_VER#v}${NC}"
 
 echo -e "\n${BLUE}[4/6] Menginstal 9Router via npm secara global...${NC}"
-$NPM_CMD install -g 9router
+npm install -g 9router
 if command -v termux-fix-shebang >/dev/null 2>&1; then
     termux-fix-shebang "$PREFIX/bin/9router" "$PREFIX/lib/node_modules/9router/cli.js" 2>/dev/null || true
 fi

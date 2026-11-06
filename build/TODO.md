@@ -148,6 +148,10 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Mengatasi crash `py3compile Permission denied: '/data/data/com.termux/files/usr/bin/bash'` dengan menambahkan `DPkg::Pre-Invoke` dan `DPkg::Post-Invoke` hooks untuk otomatis `chmod 755` pada `$PREFIX/bin/bash` dan seluruh binary saat proses package trigger APT.
   - Mengatasi error `line 283: npm: command not found` dengan menerapkan resolusi bertingkat (multi-tier resolution) yang memeriksa PATH, `$PREFIX/bin/npm`, symlink ke `$PREFIX/lib/node_modules/npm`, dan fallback langsung ke bundled npm milik Hermes Agent (`$HERMES_LIB/tools/npm`).
   - Menginisialisasi Universal Android 15 Node Hook (`node_android_fix.cjs`) sebelum perintah instalasi 9Router agar child processes terlindungi dari crash linker Android 15.
+- [x] **Perbaikan 'MODULE_NOT_FOUND npm-cli.js' & Launcher Wrapper Mandiri (v2.9.0)**:
+  - Mengatasi error `Cannot find module '.../lib/node_modules/npm/bin/npm-cli.js'` yang diakibatkan oleh jebakan symlink relatif antar direktori root yang berbeda.
+  - Mengimplementasikan pemulihan otomatis direktori core npm (`$PREFIX/lib/node_modules/npm`) dari bundled Hermes Agent jika sistem tidak memiliki npm.
+  - Menggantikan symlink rentan dengan executable launcher wrapper mandiri di `$PREFIX/bin/npm` dan `$PREFIX/bin/npx` yang langsung mengeksekusi `node <path-to-cli.js>`.
 
 ---
 
