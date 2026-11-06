@@ -21,7 +21,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.10.0"
+MOBILE_SH_VERSION="v2.11.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -445,29 +445,35 @@ EOF
 fi
 
 # ------------------------------------------------------------------------------
-# 4. Menyiapkan Script Pembantu (hc.sh & ht.sh)
+# 4. Menyiapkan Script Pembantu (hc.sh, ht.sh & diagnose.sh)
 # ------------------------------------------------------------------------------
-echo -e "\n${BLUE}[5/6] Menyiapkan script konfigurasi (hc.sh & ht.sh)...${NC}"
+echo -e "\n${BLUE}[5/6] Menyiapkan script konfigurasi (hc.sh, ht.sh, diagnose.sh)...${NC}"
 REPO_RAW_URL="https://raw.githubusercontent.com/jefripunza/gdg-yogya-2026-workshop-ai-hermes-on-pocket/master"
 
 if [ "$IS_LOCAL" = true ]; then
-    echo -e "${YELLOW}Mode --local terdeteksi: Menggunakan file hc.sh & ht.sh lokal (skip unduhan GitHub).${NC}"
+    echo -e "${YELLOW}Mode --local terdeteksi: Menggunakan file hc.sh, ht.sh & diagnose.sh lokal (skip unduhan GitHub).${NC}"
     if [ -f "./hc.sh" ] && [ "$(pwd)" != "$HOME" ]; then
         cp -f ./hc.sh "$HOME/hc.sh"
     fi
     if [ -f "./ht.sh" ] && [ "$(pwd)" != "$HOME" ]; then
         cp -f ./ht.sh "$HOME/ht.sh"
     fi
-    chmod +x "$HOME/hc.sh" "$HOME/ht.sh" 2>/dev/null || true
-    command -v termux-fix-shebang >/dev/null 2>&1 && termux-fix-shebang "$HOME/hc.sh" "$HOME/ht.sh" 2>/dev/null || true
-    echo -e "${GREEN}✓ hc.sh dan ht.sh lokal siap digunakan di: ${HOME}/${NC}"
+    if [ -f "./diagnose.sh" ] && [ "$(pwd)" != "$HOME" ]; then
+        cp -f ./diagnose.sh "$HOME/diagnose.sh"
+    elif [ -f "./build/diagnose.sh" ] && [ "$(pwd)" != "$HOME" ]; then
+        cp -f ./build/diagnose.sh "$HOME/diagnose.sh"
+    fi
+    chmod +x "$HOME/hc.sh" "$HOME/ht.sh" "$HOME/diagnose.sh" 2>/dev/null || true
+    command -v termux-fix-shebang >/dev/null 2>&1 && termux-fix-shebang "$HOME/hc.sh" "$HOME/ht.sh" "$HOME/diagnose.sh" 2>/dev/null || true
+    echo -e "${GREEN}✓ hc.sh, ht.sh, dan diagnose.sh lokal siap digunakan di: ${HOME}/${NC}"
 else
-    echo "Mengunduh hc.sh dan ht.sh dari repository resmi..."
+    echo "Mengunduh hc.sh, ht.sh, dan diagnose.sh dari repository resmi..."
     curl -fsSL "${REPO_RAW_URL}/hc.sh" -o "$HOME/hc.sh"
     curl -fsSL "${REPO_RAW_URL}/ht.sh" -o "$HOME/ht.sh"
-    chmod +x "$HOME/hc.sh" "$HOME/ht.sh"
-    command -v termux-fix-shebang >/dev/null 2>&1 && termux-fix-shebang "$HOME/hc.sh" "$HOME/ht.sh" 2>/dev/null || true
-    echo -e "${GREEN}✓ hc.sh dan ht.sh berhasil diunduh ke: ${HOME}/${NC}"
+    curl -fsSL "${REPO_RAW_URL}/diagnose.sh" -o "$HOME/diagnose.sh"
+    chmod +x "$HOME/hc.sh" "$HOME/ht.sh" "$HOME/diagnose.sh"
+    command -v termux-fix-shebang >/dev/null 2>&1 && termux-fix-shebang "$HOME/hc.sh" "$HOME/ht.sh" "$HOME/diagnose.sh" 2>/dev/null || true
+    echo -e "${GREEN}✓ hc.sh, ht.sh, dan diagnose.sh berhasil diunduh ke: ${HOME}/${NC}"
 fi
 
 # ------------------------------------------------------------------------------
@@ -529,9 +535,6 @@ if pgrep -f "hermes.*dashboard" >/dev/null 2>&1; then
 elif command -v hermes >/dev/null 2>&1; then
     echo "[+] Menjalankan Hermes Web Dashboard di background..."
     DASHBOARD_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
-    if [ -d "$PREFIX/lib/hermes-agent/app/hermes_cli/web_dist" ]; then
-        DASHBOARD_FLAGS="$DASHBOARD_FLAGS --skip-build"
-    fi
     nohup hermes dashboard $DASHBOARD_FLAGS > "$HOME/.hermes/logs/dashboard.log" 2>&1 &
     sleep 3
     PID_HD=$(pgrep -f "hermes.*dashboard" | head -n 1 || true)
@@ -583,6 +586,69 @@ fi
 # Jalankan service sekarang juga
 echo -e "\n${BLUE}=== Menjalankan Service Pertama Kali ===${NC}"
 bash "$AUTOSTART_SCRIPT"
+
+# ------------------------------------------------------------------------------
+# 6. Pemeriksaan Kesehatan Layanan (Health Check & Conditional Diagnostics)
+# ------------------------------------------------------------------------------
+echo -e "\n${BLUE}=== Memverifikasi Kesiapan Layanan (9Router & Hermes Dashboard) ===${NC}"
+echo -n "Menunggu layanan siap diakses"
+CHECK_9R_OK=false
+CHECK_HD_OK=false
+
+for i in $(seq 1 30); do
+    if [ "$CHECK_9R_OK" = false ]; then
+        if curl -sI --max-time 2 "http://127.0.0.1:20128" 2>/dev/null | grep -q "HTTP"; then
+            CHECK_9R_OK=true
+        fi
+    fi
+    if [ "$CHECK_HD_OK" = false ]; then
+        if curl -sI --max-time 2 "http://127.0.0.1:9119" 2>/dev/null | grep -q "HTTP"; then
+            CHECK_HD_OK=true
+        fi
+    fi
+
+    if [ "$CHECK_9R_OK" = true ] && [ "$CHECK_HD_OK" = true ]; then
+        echo -e " ${GREEN}[SIAP!]${NC}"
+        break
+    fi
+
+    # Feedback visual jika Hermes sedang kompilasi web UI pertama kali
+    if [ "$CHECK_HD_OK" = false ] && grep -q "Building the web UI" "$HOME/.hermes/logs/dashboard.log" 2>/dev/null; then
+        if [ "$i" -eq 10 ] || [ "$i" -eq 20 ]; then
+            echo -n " [Kompilasi Web UI...]"
+        fi
+    fi
+
+    echo -n "."
+    sleep 1
+done
+echo ""
+
+if [ "$CHECK_9R_OK" = true ] && [ "$CHECK_HD_OK" = true ]; then
+    echo -e "${GREEN}✓ Seluruh layanan (9Router :20128 & Hermes Dashboard :9119) aktif dan merespon dengan baik!${NC}"
+else
+    echo -e "${RED}[!] PERINGATAN: Terdeteksi layanan yang belum merespon HTTP:${NC}"
+    if [ "$CHECK_9R_OK" = false ]; then
+        echo -e "    ${YELLOW}✗ 9Router (:20128) belum merespon HTTP${NC}"
+    else
+        echo -e "    ${GREEN}✓ 9Router (:20128) OK${NC}"
+    fi
+    if [ "$CHECK_HD_OK" = false ]; then
+        echo -e "    ${YELLOW}✗ Hermes Dashboard (:9119) belum merespon HTTP${NC}"
+    else
+        echo -e "    ${GREEN}✓ Hermes Dashboard (:9119) OK${NC}"
+    fi
+
+    echo -e "\n${BLUE}================================================================${NC}"
+    echo -e "${YELLOW}[AUTO-DIAGNOSE] Menjalankan diagnose.sh untuk analisis masalah...${NC}"
+    echo -e "${BLUE}================================================================${NC}"
+    if [ -f "$HOME/diagnose.sh" ]; then
+        bash "$HOME/diagnose.sh"
+    elif [ -f "./diagnose.sh" ]; then
+        bash "./diagnose.sh"
+    fi
+    echo -e "${BLUE}================================================================${NC}\n"
+fi
 
 echo -e "\n${BLUE}================================================================${NC}"
 echo -e "${GREEN}✓ Setup Instalasi Selesai & Service Aktif!                      ${NC}"

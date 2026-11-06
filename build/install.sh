@@ -12,6 +12,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MOBILE_SCRIPT="${PROJECT_ROOT}/mobile.sh"
 HC_SCRIPT="${PROJECT_ROOT}/hc.sh"
 HT_SCRIPT="${PROJECT_ROOT}/ht.sh"
+DIAGNOSE_SCRIPT="${PROJECT_ROOT}/diagnose.sh"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -21,7 +22,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 # Pastikan file yang dibutuhkan ada
-for f in "$MOBILE_SCRIPT" "$HC_SCRIPT" "$HT_SCRIPT"; do
+for f in "$MOBILE_SCRIPT" "$HC_SCRIPT" "$HT_SCRIPT" "$DIAGNOSE_SCRIPT"; do
     if [ ! -f "$f" ]; then
         echo -e "${RED}[ERROR] File tidak ditemukan: $f${NC}"
         exit 1
@@ -60,20 +61,22 @@ fi
 
 echo -e "${GREEN}✓ Container '${CONTAINER_NAME}' aktif dengan port forwarding.${NC}"
 
-echo -e "\n${BLUE}=== [2/3] Menyalin Script (mobile.sh, hc.sh, ht.sh) ke Container ===${NC}"
+echo -e "\n${BLUE}=== [2/3] Menyalin Script (mobile.sh, hc.sh, ht.sh, diagnose.sh) ke Container ===${NC}"
 docker cp "${MOBILE_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/mobile.sh"
 docker cp "${HC_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/hc.sh"
 docker cp "${HT_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/ht.sh"
+docker cp "${DIAGNOSE_SCRIPT}" "${CONTAINER_NAME}:/data/data/com.termux/files/home/diagnose.sh"
 
 docker exec "${CONTAINER_NAME}" chmod +x \
     /data/data/com.termux/files/home/mobile.sh \
     /data/data/com.termux/files/home/hc.sh \
-    /data/data/com.termux/files/home/ht.sh
+    /data/data/com.termux/files/home/ht.sh \
+    /data/data/com.termux/files/home/diagnose.sh
 
 docker exec "${CONTAINER_NAME}" /entrypoint.sh bash -c \
-    "termux-fix-shebang /data/data/com.termux/files/home/mobile.sh /data/data/com.termux/files/home/hc.sh /data/data/com.termux/files/home/ht.sh 2>/dev/null || true"
+    "termux-fix-shebang /data/data/com.termux/files/home/mobile.sh /data/data/com.termux/files/home/hc.sh /data/data/com.termux/files/home/ht.sh /data/data/com.termux/files/home/diagnose.sh 2>/dev/null || true"
 
-echo -e "${GREEN}✓ Script mobile.sh, hc.sh, dan ht.sh siap di dalam container.~${NC}"
+echo -e "${GREEN}✓ Script mobile.sh, hc.sh, ht.sh, dan diagnose.sh siap di dalam container.~${NC}"
 
 echo -e "\n${BLUE}=== [3/3] Menjalankan Instalasi di Dalam Container (Mode --local) ===${NC}\n"
 docker exec -it "${CONTAINER_NAME}" /entrypoint.sh bash /data/data/com.termux/files/home/mobile.sh --local

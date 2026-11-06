@@ -29,7 +29,7 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 | `build/restart.sh` | **Host Docker (RnD)** | Script reset container Docker `termux-rnd` di macOS/Linux dengan port forwarding lengkap. |
 | `build/install.sh` | **Host Docker (RnD)** | Script pengujian lokal: menyalin script ke container dan menjalankan `mobile.sh --local`. |
 | `build/Dockerfile` | **Host Docker (RnD)** | Base image Termux container (`termux/termux-docker:latest`). |
-| `build/diagnose.sh` | **Termux / Troubleshooting** | Script diagnosa kesehatan lingkungan Termux, binary Hermes, port, dan log service. |
+| `diagnose.sh` / `build/diagnose.sh` | **Termux / Troubleshooting** | Script diagnosa kesehatan lingkungan Termux, binary Hermes, 9Router, port relay, dan log service. |
 | `README.md` | **Publik / Peserta** | Panduan ramah pemula untuk peserta workshop (100% bebas dari istilah Docker RnD). |
 | `TITLE.md` | **Proposal / Event** | Generator & kurasi pilihan judul workshop untuk diajukan ke panitia GDG. |
 | `PROMPT_PPT.md` | **Presentasi / Slide** | Blueprint pemetaan layout template PPTX DevFest 2026 & draft materi 19 slide workshop. |
@@ -174,10 +174,10 @@ Jika Anda membuka sesi baru atau menguji dari awal, ikuti urutan berikut:
    - `http://localhost:9119` -> Hermes Web Dashboard
 3. **Validasi Sintaks Script**:
    ```bash
-   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n build/install.sh && bash -n build/restart.sh && bash -n build/diagnose.sh && bash -n laptop.sh
+   bash -n mobile.sh && bash -n hc.sh && bash -n ht.sh && bash -n diagnose.sh && bash -n build/diagnose.sh && bash -n build/install.sh && bash -n build/restart.sh && bash -n laptop.sh
    ```
 4. **Aturan Versi `mobile.sh` (`MOBILE_SH_VERSION`)**:
-   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.6.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
+   - Setiap kali ada perubahan pada `mobile.sh`, wajib menaikkan nomor versi pada variabel `MOBILE_SH_VERSION` di bagian atas `mobile.sh` (saat ini `v2.11.0`) agar saat dijalankan via `curl` di Termux terlihat jelas di judul banner apakah yang dieksekusi sudah versi terbaru atau masih terkena cache CDN GitHub.
 5. **Pembaruan Task**:
    - Setelah selesai mengimplementasikan fitur atau perbaikan bug, perbarui checklist dan riwayat di `build/TODO.md`.
 

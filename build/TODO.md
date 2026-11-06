@@ -156,6 +156,11 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Mengeliminasi kontaminasi file `npm-cli.js` yang disebabkan oleh shell redirection ke symlink `$PREFIX/bin/npm`.
   - Menambahkan deteksi dan pembersihan otomatis file `npm-cli.js` yang korup dari sesi sebelumnya.
   - Memastikan paket resmi Termux `nodejs` dan `npm` diinstal secara bersih via APT dan menyelaraskan shebang resmi tanpa merusak struktur file JavaScript asli.
+- [x] **Penyimpanan diagnose.sh Saat Setup & Conditional Auto-Diagnostics Port 9119/20128 (v2.11.0)**:
+  - Menyimpan `diagnose.sh` secara otomatis ke `$HOME/diagnose.sh` bersama `hc.sh` dan `ht.sh` di `mobile.sh` (baik mode `--local` maupun remote `curl` via GitHub) dengan izin executable dan shebang terselaras.
+  - Menghapus flag invalid `--skip-build` pada `hermes dashboard` di `mobile.sh` dan `hc.sh` yang menyebabkan Hermes Dashboard langsung crash saat `web_dist` tersedia.
+  - Mengimplementasikan polling verifikasi kesehatan layanan (hingga 30s) di akhir proses instalasi sebelum info banner final.
+  - Logika diagnostik kondisional: Jika `9Router (:20128)` dan `Hermes Dashboard (:9119)` berhasil di-hit OK, sistem **tidak** menjalankan `diagnose.sh`. Jika salah satu atau kedua port gagal diakses, sistem secara otomatis mengeksekusi `diagnose.sh` untuk menghasilkan laporan diagnosa mendalam (`~/diag_report.txt`).
 
 ---
 

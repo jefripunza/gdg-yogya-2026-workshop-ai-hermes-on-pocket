@@ -8,7 +8,7 @@
 set -e
 
 # Versi Script
-HC_SH_VERSION="v2.4.0"
+HC_SH_VERSION="v2.5.0"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -212,11 +212,7 @@ fi
 nohup hermes gateway > "$HERMES_DIR/logs/gateway.log" 2>&1 &
 
 # Tentukan flags hermes dashboard
-WEB_DIST="$HERMES_LIB/app/hermes_cli/web_dist"
 DASHBOARD_FLAGS="--host 127.0.0.1 --port 9118 --no-open"
-if [ -d "$WEB_DIST" ]; then
-    DASHBOARD_FLAGS="$DASHBOARD_FLAGS --skip-build"
-fi
 
 # Restart atau jalankan Hermes Dashboard & Relay
 echo -e "${YELLOW}Merestart Hermes Dashboard & Relay...${NC}"
@@ -260,9 +256,6 @@ if command -v socat >/dev/null 2>&1; then
 else
     # Jika tidak ada socat (misal Docker container biasa), bind langsung ke 0.0.0.0:9119
     DASHBOARD_FLAGS_NO_SOCAT="--host 0.0.0.0 --port 9119 --no-open"
-    if [ -d "$WEB_DIST" ]; then
-        DASHBOARD_FLAGS_NO_SOCAT="$DASHBOARD_FLAGS_NO_SOCAT --skip-build"
-    fi
     NODE_OPTIONS="--require $FIX_FILE" nohup hermes dashboard $DASHBOARD_FLAGS_NO_SOCAT > "$HERMES_DIR/logs/dashboard.log" 2>&1 &
     sleep 2
 fi
