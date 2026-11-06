@@ -118,9 +118,7 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 
 ### 11. Jaminan Izin Eksekusi DPkg Hook & Multi-Tier NPM Resolution
 - **DPkg Hook `chmod 755`**: Saat package `bash` atau `python` di-unpack oleh dpkg, postinst trigger `py3compile` bisa mengalami `PermissionError: [Errno 13] Permission denied: '/data/data/com.termux/files/usr/bin/bash'` jika `bash` belum berstatus executable. Konfigurasi `apt.conf.d/99-termux-cloudflare` wajib menyertakan `DPkg::Pre-Invoke` dan `DPkg::Post-Invoke` untuk selalu melakukan `chmod 755` pada `$PREFIX/bin/bash` dan `$PREFIX/bin/*`.
-- **Anti-Symlink Trap & Launcher Wrapper untuk NPM**: Jangan membuat symlink file `bin/npm` antar direktori yang berbeda root (seperti dari `$HERMES_LIB/tools/npm/bin/npm` ke `$PREFIX/bin/npm`), karena script bawaan npm menyelesaikan path `npm-cli.js` secara relatif terhadap `$0`, yang memicu error `MODULE_NOT_FOUND: Cannot find module '.../lib/node_modules/npm/bin/npm-cli.js'`. Solusi yang wajib diterapkan adalah:
-  1. Menyalin core modul npm ke `$PREFIX/lib/node_modules/npm` jika belum ada.
-  2. Menyediakan file executable wrapper mandiri di `$PREFIX/bin/npm` dan `$PREFIX/bin/npx` yang langsung mengeksekusi `node <path-to-cli.js>`.
+- **Bahaya Redirection pada Symlink (`cat > $PREFIX/bin/npm`)**: Di Termux, `$PREFIX/bin/npm` adalah symlink yang mengarah ke `../lib/node_modules/npm/bin/npm-cli.js`. Jangan pernah menulis file launcher menggunakan `cat > $PREFIX/bin/npm` tanpa menghapus symlink terlebih dahulu (`rm -f`), karena redirection akan mengikuti symlink dan menimpa file JavaScript `npm-cli.js` dengan script bash, memicu `SyntaxError: Unexpected token '['`. Selalu gunakan paket resmi Termux `apt install nodejs npm` dan fallback symlink bersih tanpa merusak target script.
 - **Universal Android 15 Node Hook (`node_android_fix.cjs`)**: Hook ini wajib dibuat dan dimasukkan ke `NODE_OPTIONS` **sebelum** perintah `npm install -g 9router` dijalankan, agar seluruh child process npm terlindungi dari crash dynamic linker Android 15.
 
 ---

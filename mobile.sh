@@ -21,7 +21,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.9.0"
+MOBILE_SH_VERSION="v2.10.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -353,7 +353,7 @@ if [ -f "$NODE_DEPS" ] && command -v node >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------------------------
-# 3. Instalasi & Verifikasi Node.js serta NPM (Multi-Tier Resolution)
+# 3. Instalasi & Verifikasi Node.js serta NPM
 # ------------------------------------------------------------------------------
 echo -e "\n${BLUE}[3/6] Menginstal dan memverifikasi Node.js & npm...${NC}"
 
@@ -361,83 +361,66 @@ echo -e "\n${BLUE}[3/6] Menginstal dan memverifikasi Node.js & npm...${NC}"
 chmod 755 "$PREFIX/bin/bash" "$PREFIX/bin/sh" 2>/dev/null || true
 chmod +x "$PREFIX/bin"/* 2>/dev/null || true
 
-# Coba instal nodejs standar jika binary node belum ada
-if ! command -v node >/dev/null 2>&1; then
-    apt-get install -y --allow-unauthenticated \
-        -o Dpkg::Options::="--force-confdef" \
-        -o Dpkg::Options::="--force-confold" \
-        -o Dpkg::Options::="--force-overwrite" nodejs || \
-    apt-get install -y --allow-unauthenticated \
-        -o Dpkg::Options::="--force-confdef" \
-        -o Dpkg::Options::="--force-confold" \
-        -o Dpkg::Options::="--force-overwrite" nodejs-lts || true
+# Deteksi dan bersihkan file npm-cli.js yang korup dari sesi sebelumnya
+NPM_CLI="$PREFIX/lib/node_modules/npm/bin/npm-cli.js"
+if [ -f "$NPM_CLI" ] && grep -q "SYS_CLI" "$NPM_CLI" 2>/dev/null; then
+    echo -e "${YELLOW}[INFO] Menghapus file npm-cli.js yang korup dari sesi sebelumnya...${NC}"
+    rm -rf "$PREFIX/lib/node_modules/npm"
+    rm -f "$PREFIX/bin/npm" "$PREFIX/bin/npx"
 fi
 
-# [Lapisan 1] Restorasi direktori core $PREFIX/lib/node_modules/npm dari bundled Hermes
+# Instal paket resmi nodejs dan npm dari repositori Termux
+apt-get install -y --allow-unauthenticated \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    -o Dpkg::Options::="--force-overwrite" \
+    nodejs npm || true
+
+# Verifikasi dan reinstalasi bersih jika npm belum berfungsi
+if ! npm -v >/dev/null 2>&1; then
+    echo -e "${YELLOW}[INFO] Memulihkan paket nodejs & npm secara bersih...${NC}"
+    rm -f "$PREFIX/bin/npm" "$PREFIX/bin/npx"
+    rm -rf "$PREFIX/lib/node_modules/npm"
+    apt-get install --reinstall -y --allow-unauthenticated \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        -o Dpkg::Options::="--force-overwrite" \
+        nodejs npm || true
+fi
+
+# Fallback ke bundled npm milik Hermes Agent jika direktori core npm masih belum ada
 SYS_NPM_DIR="$PREFIX/lib/node_modules/npm"
 HERMES_NPM_DIR="$HERMES_LIB/tools/npm/lib/node_modules/npm"
 if [ ! -d "$SYS_NPM_DIR" ] && [ -d "$HERMES_NPM_DIR" ]; then
-    echo -e "${YELLOW}[INFO] Memulihkan direktori core npm dari bundled Hermes ke \$PREFIX/lib/node_modules/npm...${NC}"
+    echo -e "${YELLOW}[INFO] Menyalin direktori core npm dari bundled Hermes ke \$PREFIX/lib/node_modules/npm...${NC}"
     mkdir -p "$PREFIX/lib/node_modules"
     cp -rf "$HERMES_NPM_DIR" "$SYS_NPM_DIR" 2>/dev/null || true
 fi
 
-# [Lapisan 2] Bulletproof NPM & NPX Launcher Wrapper (kebal dari kegagalan symlink relatif)
-mkdir -p "$PREFIX/bin"
-cat << 'EOF' > "$PREFIX/bin/npm"
-#!/data/data/com.termux/files/usr/bin/sh
-PREFIX_BIN="${PREFIX:-/data/data/com.termux/files/usr}/bin"
-NODE_BIN="$PREFIX_BIN/node"
-SYS_CLI="${PREFIX:-/data/data/com.termux/files/usr}/lib/node_modules/npm/bin/npm-cli.js"
-HERMES_CLI="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent/tools/npm/lib/node_modules/npm/bin/npm-cli.js"
-
-if [ -f "$SYS_CLI" ]; then
-    exec "$NODE_BIN" "$SYS_CLI" "$@"
-elif [ -f "$HERMES_CLI" ]; then
-    exec "$NODE_BIN" "$HERMES_CLI" "$@"
-else
-    echo "Error: npm-cli.js tidak ditemukan di Termux." >&2
-    exit 1
+# Pastikan symlink resmi $PREFIX/bin/npm dan $PREFIX/bin/npx mengarah ke file JavaScript yang valid
+if [ ! -e "$PREFIX/bin/npm" ] && [ -f "$SYS_NPM_DIR/bin/npm-cli.js" ]; then
+    ln -sf "../lib/node_modules/npm/bin/npm-cli.js" "$PREFIX/bin/npm"
+    chmod 755 "$PREFIX/bin/npm"
 fi
-EOF
-chmod 755 "$PREFIX/bin/npm"
-
-cat << 'EOF' > "$PREFIX/bin/npx"
-#!/data/data/com.termux/files/usr/bin/sh
-PREFIX_BIN="${PREFIX:-/data/data/com.termux/files/usr}/bin"
-NODE_BIN="$PREFIX_BIN/node"
-SYS_NPX="${PREFIX:-/data/data/com.termux/files/usr}/lib/node_modules/npm/bin/npx-cli.js"
-HERMES_NPX="${PREFIX:-/data/data/com.termux/files/usr}/lib/hermes-agent/tools/npm/lib/node_modules/npm/bin/npx-cli.js"
-
-if [ -f "$SYS_NPX" ]; then
-    exec "$NODE_BIN" "$SYS_NPX" "$@"
-elif [ -f "$HERMES_NPX" ]; then
-    exec "$NODE_BIN" "$HERMES_NPX" "$@"
-else
-    echo "Error: npx-cli.js tidak ditemukan di Termux." >&2
-    exit 1
+if [ ! -e "$PREFIX/bin/npx" ] && [ -f "$SYS_NPM_DIR/bin/npx-cli.js" ]; then
+    ln -sf "../lib/node_modules/npm/bin/npx-cli.js" "$PREFIX/bin/npx"
+    chmod 755 "$PREFIX/bin/npx"
 fi
-EOF
-chmod 755 "$PREFIX/bin/npx"
 
+# Selaraskan shebang npm & npx agar tidak memicu bad ELF linker64 di Android
 if command -v termux-fix-shebang >/dev/null 2>&1; then
-    termux-fix-shebang "$PREFIX/bin/npm" "$PREFIX/bin/npx" 2>/dev/null || true
-fi
-
-# [Lapisan 3] Verifikasi eksekusi npm & Reinstall fallback jika perlu
-NPM_VER=$(npm -v 2>/dev/null || true)
-if [ -z "$NPM_VER" ]; then
-    echo -e "${YELLOW}[INFO] npm belum merespon. Menjalankan reinstall nodejs via APT...${NC}"
-    apt-get install -y --reinstall --allow-unauthenticated \
-        -o Dpkg::Options::="--force-confdef" \
-        -o Dpkg::Options::="--force-confold" \
-        -o Dpkg::Options::="--force-overwrite" nodejs || true
-    NPM_VER=$(npm -v 2>/dev/null || echo "Tidak terdeteksi")
+    termux-fix-shebang "$PREFIX/bin/npm" "$PREFIX/bin/npx" "$SYS_NPM_DIR/bin/npm-cli.js" "$SYS_NPM_DIR/bin/npx-cli.js" 2>/dev/null || true
 fi
 
 NODE_VER=$(node -v 2>/dev/null || echo "Tidak terdeteksi")
+NPM_VER=$(npm -v 2>/dev/null || echo "Tidak terdeteksi")
 echo -e "${GREEN}✓ Node.js terinstal: ${NODE_VER}${NC}"
 echo -e "${GREEN}✓ npm terinstal    : v${NPM_VER#v}${NC}"
+
+if ! command -v npm >/dev/null 2>&1 || [ "$NPM_VER" = "Tidak terdeteksi" ]; then
+    echo -e "${RED}[ERROR] Gagal memulihkan npm. Silakan coba jalankan manual: pkg install -y nodejs npm${NC}"
+    exit 1
+fi
 
 echo -e "\n${BLUE}[4/6] Menginstal 9Router via npm secara global...${NC}"
 npm install -g 9router

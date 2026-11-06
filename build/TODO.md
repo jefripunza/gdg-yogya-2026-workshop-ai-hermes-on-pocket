@@ -152,6 +152,10 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
   - Mengatasi error `Cannot find module '.../lib/node_modules/npm/bin/npm-cli.js'` yang diakibatkan oleh jebakan symlink relatif antar direktori root yang berbeda.
   - Mengimplementasikan pemulihan otomatis direktori core npm (`$PREFIX/lib/node_modules/npm`) dari bundled Hermes Agent jika sistem tidak memiliki npm.
   - Menggantikan symlink rentan dengan executable launcher wrapper mandiri di `$PREFIX/bin/npm` dan `$PREFIX/bin/npx` yang langsung mengeksekusi `node <path-to-cli.js>`.
+- [x] **Perbaikan 'SyntaxError Unexpected token [' di npm-cli.js (v2.10.0)**:
+  - Mengeliminasi kontaminasi file `npm-cli.js` yang disebabkan oleh shell redirection ke symlink `$PREFIX/bin/npm`.
+  - Menambahkan deteksi dan pembersihan otomatis file `npm-cli.js` yang korup dari sesi sebelumnya.
+  - Memastikan paket resmi Termux `nodejs` dan `npm` diinstal secara bersih via APT dan menyelaraskan shebang resmi tanpa merusak struktur file JavaScript asli.
 
 ---
 
