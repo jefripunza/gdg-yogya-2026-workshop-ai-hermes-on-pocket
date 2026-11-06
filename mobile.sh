@@ -20,7 +20,7 @@ done
 
 # Versi Script (Selalu naikkan versi ini setiap kali ada perubahan di mobile.sh
 # agar saat dijalankan via curl terlihat jelas apakah sudah versi terbaru atau masih cache)
-MOBILE_SH_VERSION="v2.6.0"
+MOBILE_SH_VERSION="v2.7.0"
 
 # Warna output terminal
 GREEN='\033[0;32m'
@@ -96,9 +96,23 @@ APT::Ignore-Hold "true";
 Dpkg::Options {
    "--force-confdef";
    "--force-confold";
+   "--force-overwrite";
 };
 EOF
 echo -e "${GREEN}✓ [${MOBILE_SH_VERSION}] Repo Termux dikunci ke: $(cat "$PREFIX/etc/apt/sources.list")${NC}"
+
+# Auto-recovery dpkg jika ada sesi instalasi sebelumnya yang terhenti atau terjadi konflik file
+# (misal: konflik libandroid-glob vs ndk-sysroot pada /usr/include/glob.h)
+echo -e "${BLUE}Memeriksa dan memulihkan status dependensi dpkg...${NC}"
+dpkg --configure -a --force-confdef --force-confold --force-overwrite 2>/dev/null || true
+for adir in "/data/data/com.termux/cache/apt/archives" "$PREFIX/var/cache/apt/archives"; do
+    if [ -d "$adir" ]; then
+        if ls "$adir"/libandroid-glob*.deb >/dev/null 2>&1; then
+            dpkg -i --force-overwrite --force-confdef --force-confold "$adir"/libandroid-glob*.deb 2>/dev/null || true
+        fi
+    fi
+done
+dpkg --configure -a --force-confdef --force-confold --force-overwrite 2>/dev/null || true
 
 echo -e "\n${BLUE}[${MOBILE_SH_VERSION}] Memperbarui seluruh library sistem (dist-upgrade) agar curl & node sinkron...${NC}"
 # Gunakan apt-get secara langsung (bukan wrapper pkg) agar sources.list tidak ditimpa balik ke termux.net
@@ -107,11 +121,20 @@ apt-get update -y \
     -o Acquire::AllowDowngradeToInsecureRepositories=true \
     -o APT::Get::AllowUnauthenticated=true
 
+# Perbaiki broken packages jika ada paket setengah terpasang
+apt-get -f install -y --allow-unauthenticated \
+    -o Acquire::AllowInsecureRepositories=true \
+    -o APT::Get::AllowUnauthenticated=true \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    -o Dpkg::Options::="--force-overwrite" 2>/dev/null || true
+
 apt-get install -y --allow-unauthenticated \
     -o Acquire::AllowInsecureRepositories=true \
     -o APT::Get::AllowUnauthenticated=true \
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
+    -o Dpkg::Options::="--force-overwrite" \
     termux-keyring || true
 
 # Kunci kembali sources.list ke Cloudflare Mirror setelah termux-keyring diperbarui
@@ -128,7 +151,8 @@ apt-get dist-upgrade -y --allow-unauthenticated \
     -o Acquire::AllowInsecureRepositories=true \
     -o APT::Get::AllowUnauthenticated=true \
     -o Dpkg::Options::="--force-confdef" \
-    -o Dpkg::Options::="--force-confold"
+    -o Dpkg::Options::="--force-confold" \
+    -o Dpkg::Options::="--force-overwrite"
 
 # Pastikan kembali sources.list tetap di Cloudflare Mirror pasca dist-upgrade
 echo "deb [trusted=yes] https://packages-cf.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
@@ -138,6 +162,7 @@ chmod +x "$PREFIX/bin"/* 2>/dev/null || true
 apt-get install -y --allow-unauthenticated \
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
+    -o Dpkg::Options::="--force-overwrite" \
     libc++ \
     libngtcp2 \
     libnghttp2 \
@@ -202,7 +227,10 @@ if [ "$DOWNLOADED" = true ]; then
       > "$SOURCES_FILE"
     
     if apt-get update -y -o Acquire::AllowInsecureRepositories=true -o APT::Get::AllowUnauthenticated=true 2>/dev/null; then
-        if apt-get install -y --allow-unauthenticated -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" hermes-agent; then
+        if apt-get install -y --allow-unauthenticated \
+            -o Dpkg::Options::="--force-confdef" \
+            -o Dpkg::Options::="--force-confold" \
+            -o Dpkg::Options::="--force-overwrite" hermes-agent; then
             APT_SUCCESS=true
             echo -e "${GREEN}✓ hermes-agent berhasil diinstal via APT (${CHANNEL})!${NC}"
         fi
@@ -241,7 +269,10 @@ fi
 # 3. Instalasi Node.js Terbaru & 9Router via npm
 # ------------------------------------------------------------------------------
 echo -e "\n${BLUE}[3/6] Menginstal Node.js versi terbaru & npm...${NC}"
-apt-get install -y --allow-unauthenticated -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" nodejs
+apt-get install -y --allow-unauthenticated \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    -o Dpkg::Options::="--force-overwrite" nodejs
 
 NODE_VER=$(node -v || true)
 NPM_VER=$(npm -v || true)

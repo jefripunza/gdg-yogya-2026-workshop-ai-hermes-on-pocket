@@ -140,6 +140,10 @@ Dokumen ini mencatat seluruh riwayat pengerjaan task sejak awal proyek hingga sa
 - [x] **Pembaruan Sumber Aplikasi Termux (Google Play Store vs F-Droid)**:
   - Membalik rekomendasi instalasi Termux di `README.md` menjadi mengarahkan peserta ke [Google Play Store](https://play.google.com/store/apps/details?id=com.termux) (versi terbaru/paling update) dan tidak menggunakan F-Droid.
   - Menyelaraskan referensi teks pada `PROMPT_PPT.md` dan file presentasi `DevFest Jogjakarta 2026 - Workshop AI.pptx` (Slide 7 & 9).
+- [x] **Perbaikan Konflik File Dpkg Termux (libandroid-glob vs ndk-sysroot) (v2.7.0)**:
+  - Mengatasi error dpkg file overwrite conflict: `dpkg: error processing archive ... libandroid-glob: trying to overwrite '/data/data/com.termux/files/usr/include/glob.h', which is also in package ndk-sysroot 27c`.
+  - Menambahkan `--force-overwrite` ke konfigurasi `Dpkg::Options` di `99-termux-cloudflare` dan seluruh pemanggilan `apt-get` (`dist-upgrade`, `install`, `-f install`).
+  - Menambahkan auto-recovery dpkg di awal eksekusi `mobile.sh` untuk menyelesaikan broken/half-installed packages dari sesi sebelumnya.
 
 ---
 

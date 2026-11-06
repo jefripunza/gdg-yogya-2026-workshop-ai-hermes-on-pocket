@@ -110,6 +110,12 @@ Repositori ini dibuat untuk kebutuhan Workshop **GDG Yogya 2026: AI Hermes on Po
 - **FILE TARGET YANG DIEDIT ADALAH `./DevFest Jogjakarta 2026 - Workshop AI.pptx` (Root Project)**: File presentasi utama telah dikeluarkan dari folder `assets/` ke root direktori. Saat AI diminta membuat atau memperbarui slide presentasi, AI wajib membaca/`clone` struktur slide dari `assets/template.pptx` (sebagai sumber acuan style, 100% Read-Only), menyuntikkan konten teks serta gambar sesuai `PROMPT_PPT.md`, lalu menyimpan hasilnya ke `./DevFest Jogjakarta 2026 - Workshop AI.pptx` di root.
 - Seluruh file gambar `.png` di dalam `assets/` wajib mengikuti konvensi penamaan `<nomor-slide>.<urutan>.<judul-gambar>.png` (contoh: `2.1.foto-profil-jefri-herdi-triyanto.png`, `7.1.persiapan-botfather-new-bot.png`, `11.1.botfather-buka-mini-app.png`) dan dipastikan 100% masuk ke dalam slide yang sesuai.
 
+### 10. Penanganan Konflik File Dpkg di Termux (`--force-overwrite`)
+- Pada perangkat Android/Termux yang telah memiliki paket terinstal sebelumnya (seperti `clang`, `ndk-sysroot 27c`, dsb.), proses `apt-get dist-upgrade` rentan mengalami kegagalan akibat file conflict antara paket lama dan paket baru (contoh kasus riil: paket `libandroid-glob_0.6-3` mencoba menimpa `/data/data/com.termux/files/usr/include/glob.h` yang terdaftar sebagai milik `ndk-sysroot 27c`).
+- **Aturan**:
+  1. Seluruh operasi `apt-get` (`dist-upgrade`, `install`, `-f install`) dan konfigurasi `apt.conf.d/99-termux-cloudflare` **WAJIB** menyertakan opsi `Dpkg::Options { "--force-overwrite"; };`.
+  2. `mobile.sh` harus selalu melakukan *auto-recovery* pada awal eksekusi dengan menjalankan `dpkg --configure -a --force-overwrite` dan menginstal file arsip `.deb` yang mengalami konflik dengan `--force-overwrite` sebelum memulai upgrade.
+
 ---
 
 ## 📖 Step-by-Step Runbook (Mulai dari Nol hingga Siap Pakai)
